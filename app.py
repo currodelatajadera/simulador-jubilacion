@@ -1,180 +1,107 @@
 import streamlit as st
 
-# -------------------------------
-# CONFIGURACIÓN GENERAL
-# -------------------------------
-st.set_page_config(
-    page_title="Simulador Profesional de Jubilación",
-    page_icon="📊",
-    layout="wide"
+st.set_page_config(page_title="Simulador de Jubilación", layout="centered")
+
+st.title("📊 Simulador de Jubilación")
+st.caption("Herramienta orientativa para análisis de previsión social")
+
+# -----------------------
+# ENTRADA DE DATOS
+# -----------------------
+st.sidebar.header("Datos del cliente")
+
+anio_nacimiento = st.sidebar.number_input(
+    "Año de nacimiento", min_value=1940, max_value=2005, value=1978
 )
 
-# -------------------------------
-# ESTILOS PROFESIONALES (CSS)
-# -------------------------------
-st.markdown("""
-<style>
+edad_jubilacion = st.sidebar.slider(
+    "Edad de jubilación prevista", min_value=63, max_value=67, value=67
+)
 
-/* Fondo azul celeste */
-.stApp {
-    background-color: #eaf3fb;
-}
+anos_cotizados = st.sidebar.slider(
+    "Años cotizados", min_value=0.0, max_value=45.0, value=15.0, step=0.5
+)
 
-/* Tarjetas principales */
-.card {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 18px;
-    box-shadow: 0px 6px 18px rgba(0,0,0,0.12);
-    margin-bottom: 25px;
-}
+base_media = st.sidebar.number_input(
+    "Base media de cotización (€)", min_value=800, max_value=6000, value=3000
+)
 
-/* Títulos */
-h1 {
-    color: #0f172a;
-    font-size: 40px;
-}
-h2, h3 {
-    color: #1e293b;
-}
+tipo_jubilacion = st.sidebar.selectbox(
+    "Tipo de jubilación",
+    ["Ordinaria", "Anticipada voluntaria", "Anticipada involuntaria"]
+)
 
-/* INPUTS: todos blancos, borde suave */
-input, select, textarea {
-    background-color: #ffffff !important;
-    border-radius: 10px !important;
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: inset 0px 1px 2px rgba(0,0,0,0.05);
-}
+# -----------------------
+# CÁLCULOS
+# -----------------------
+# Base reguladora
+base_reguladora = (base_media * 300) / 350
 
-/* Inputs de Streamlit */
-div[data-baseweb="input"] input,
-div[data-baseweb="select"] > div {
-    background-color: #ffffff !important;
-    border-radius: 10px !important;
-    border: 1px solid #cbd5e1 !important;
-}
+# Porcentaje por años cotizados
+if anos_cotizados < 15:
+    porcentaje = 0
+elif anos_cotizados >= 36.5:
+    porcentaje = 1
+else:
+    porcentaje = 0.5 + (anos_cotizados - 15) * (0.5 / 21.5)
 
-/* Resultado destacado */
-.resultado {
-    background-color: #d1fae5;
-    padding: 35px;
-    border-radius: 18px;
-    text-align: center;
-    font-size: 34px;
-    font-weight: bold;
-    color: #065f46;
-}
+pension_teorica = base_reguladora * porcentaje
 
-/* Botón principal */
-div.stButton > button {
-    background-color: #2563eb;
-    color: white;
-    font-size: 20px;
-    padding: 12px;
-    border-radius: 12px;
-    border: none;
-}
+# Penalización si es anticipada (simplificada)
+penalizacion = 0
+if tipo_jubilacion != "Ordinaria":
+    if anos_cotizados < 38:
+        penalizacion = 0.15
+    else:
+        penalizacion = 0.10
 
-div.stButton > button:hover {
-    background-color: #1d4ed8;
-}
+pension_final = pension_teorica * (1 - penalizacion)
 
-/* Footer */
-.footer {
-    font-size: 12px;
-    color: #475569;
-    margin-top: 30px;
-}
+# -----------------------
+# RESULTADOS
+# -----------------------
+st.subheader("📌 Resultados estimados")
 
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------
-# CABECERA
-# -------------------------------
-st.title("Simulador Profesional de Jubilación")
-st.caption("Herramienta de asesoramiento previsional para clientes")
-
-st.divider()
-
-# -------------------------------
-# COLUMNAS
-# -------------------------------
 col1, col2 = st.columns(2)
 
-# -------------------------------
-# DATOS DEL CLIENTE
-# -------------------------------
-with col1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Datos del Cliente")
+col1.metric("Base reguladora", f"{base_reguladora:,.2f} €")
+col2.metric("Porcentaje aplicable", f"{porcentaje*100:.2f} %")
 
-    nombre = st.text_input("Nombre del cliente", placeholder="Ej. Juan Pérez")
-    edad_actual = st.number_input("Edad actual", min_value=18, max_value=67, value=45)
-    base_media = st.number_input("Base media de cotización (€ / mes)", min_value=0, value=2000)
-    años_cotizados = st.number_input("Años cotizados", min_value=0, max_value=45, value=25)
+st.metric("Pensión mensual estimada", f"{pension_final:,.2f} €")
+st.metric("Pensión anual (14 pagas)", f"{pension_final*14:,.2f} €")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+if penalizacion > 0:
+    st.warning(f"⚠️ Se aplica una penalización aproximada del {penalizacion*100:.0f}% por jubilación anticipada")
 
-# -------------------------------
-# DATOS JUBILACIÓN
-# -------------------------------
-with col2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Tipo de Jubilación")
+# -----------------------
+# SIMULACIÓN COMERCIAL
+# -----------------------
+st.subheader("📈 Simulación de mejora")
 
-    tipo_jubilacion = st.selectbox(
-        "Modalidad",
-        ["Ordinaria", "Anticipada"]
-    )
+anos_extra = st.slider(
+    "¿Y si cotizara algunos años más?",
+    min_value=0.0, max_value=10.0, value=5.0, step=0.5
+)
 
-    edad_jubilacion = 65 if años_cotizados >= 38 else 67
+nuevos_anos = min(anos_cotizados + anos_extra, 36.5)
 
-    st.markdown(f"""
-    **Edad legal estimada:** {edad_jubilacion} años  
-    **Años para jubilarse:** {max(0, edad_jubilacion - edad_actual)}
-    """)
+if nuevos_anos >= 36.5:
+    nuevo_porcentaje = 1
+else:
+    nuevo_porcentaje = 0.5 + (nuevos_anos - 15) * (0.5 / 21.5)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+nueva_pension = base_reguladora * nuevo_porcentaje
 
-# -------------------------------
-# SIMULACIÓN
-# -------------------------------
-st.divider()
+incremento = nueva_pension - pension_final
 
-if st.button("📊 SIMULAR JUBILACIÓN", use_container_width=True):
+st.success(f"💶 Pensión con {nuevos_anos} años cotizados: {nueva_pension:,.2f} € / mes")
+st.info(f"📊 Mejora mensual: +{incremento:,.2f} €")
+st.info(f"📊 Mejora anual: +{incremento*14:,.2f} €")
 
-    if años_cotizados < 15:
-        porcentaje = 0
-    elif años_cotizados >= 36:
-        porcentaje = 1
-    else:
-        porcentaje = años_cotizados / 36
+# -----------------------
+# AVISO LEGAL
+# -----------------------
+st.caption(
+    "⚠️ Simulación orientativa. No constituye cálculo oficial de la Seguridad Social."
+)
 
-    penalizacion = 0.85 if tipo_jubilacion == "Anticipada" else 1
-    pension_mensual = base_media * porcentaje * penalizacion
-
-    st.markdown(f"""
-    <div class="resultado">
-        Pensión estimada<br>
-        {pension_mensual:,.2f} € / mes
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Detalle del cálculo")
-
-    st.write(f"Porcentaje aplicado por años cotizados: **{porcentaje*100:.1f}%**")
-    if tipo_jubilacion == "Anticipada":
-        st.write("Penalización por jubilación anticipada: **-15%**")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# -------------------------------
-# LEGAL
-# -------------------------------
-st.markdown("""
-<div class="footer">
-Simulación orientativa. No constituye oferta vinculante ni cálculo oficial de la Seguridad Social.
-</div>
-""", unsafe_allow_html=True)
