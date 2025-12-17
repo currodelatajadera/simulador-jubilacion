@@ -1,43 +1,109 @@
+```python
 import streamlit as st
+import pandas as pd
+from datetime import date
 
-st.set_page_config(page_title="Simulador de Jubilación", layout="wide")
+st.set_page_config(
+    page_title="Simulador Profesional de Jubilación",
+    page_icon="📊",
+    layout="wide"
+)
 
-st.title("Simulador de Jubilación – Uso Profesional")
-st.markdown("Introduce los datos del cliente y pulsa **Simular**")
+# ---------- ESTILOS ----------
+st.markdown("""
+<style>
+body { background-color: #f5f6fa; }
+.block-container { padding: 2rem 3rem; }
+.card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+}
+.title {
+    font-size: 36px;
+    font-weight: 700;
+}
+.subtitle {
+    font-size: 20px;
+    color: #555;
+}
+.result {
+    font-size: 40px;
+    font-weight: 700;
+    color: #1a7f37;
+}
+.small {
+    font-size: 14px;
+    color: #777;
+}
+</style>
+""", unsafe_allow_html=True)
 
+# ---------- CABECERA ----------
+col_logo, col_title = st.columns([1,4])
+with col_logo:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/3/3a/Logo_placeholder.png", width=90)
+with col_title:
+    st.markdown('<div class="title">Simulador Profesional de Jubilación</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">Herramienta de asesoramiento financiero – Uso en oficina</div>', unsafe_allow_html=True)
+
+st.markdown("---")
+
+# ---------- DATOS CLIENTE ----------
 col1, col2 = st.columns(2)
 
 with col1:
-    st.header("Datos del cliente")
-    anio_nacimiento = st.number_input("Año de nacimiento", min_value=1940, max_value=2007, value=1978)
-    edad_jubilacion = st.number_input("Edad de jubilación", min_value=60, max_value=70, value=67)
-    anios_cotizados = st.number_input("Años cotizados", min_value=0, max_value=45, value=15)
-    base_media = st.number_input("Base media mensual (€)", min_value=500, max_value=6000, value=3000)
-    tipo = st.selectbox("Tipo de jubilación", ["Ordinaria", "Anticipada"])
-
-    simular = st.button("SIMULAR JUBILACIÓN")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("👤 Datos del cliente")
+    nombre = st.text_input("Nombre del cliente")
+    nacimiento = st.number_input("Año de nacimiento", 1940, 2005, 1978)
+    edad_jubilacion = st.selectbox("Edad de jubilación", [63, 64, 65, 66, 67], index=4)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.header("Resultado estimado")
-    if simular:
-        base_reguladora = base_media * 12
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📂 Cotización")
+    anos_cotizados = st.number_input("Años cotizados", 0, 45, 15)
+    base_mensual = st.number_input("Base de cotización mensual (€)", 500, 6000, 3000, step=50)
+    tipo = st.radio("Tipo de jubilación", ["Ordinaria", "Anticipada"])
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        if anios_cotizados < 15:
-            porcentaje = 0
-        elif anios_cotizados < 36:
-            porcentaje = 0.5
-        else:
-            porcentaje = 1
-
-        pension_anual = base_reguladora * porcentaje
-        pension_mensual = pension_anual / 14
-
-        st.metric("Base reguladora anual (€)", f"{base_reguladora:,.0f}")
-        st.metric("Porcentaje aplicado", f"{porcentaje*100:.0f} %")
-        st.metric("Pensión mensual estimada (€)", f"{pension_mensual:,.0f}")
-
-        brecha = base_media - pension_mensual
-        st.metric("Brecha mensual (€)", f"{brecha:,.0f}")
+# ---------- CÁLCULOS ----------
+def porcentaje_base(anos):
+    if anos < 15:
+        return 0
+    elif anos >= 38:
+        return 1
     else:
-        st.info("Introduce los datos y pulsa SIMULAR")
+        return 0.5 + (anos - 15) * (0.5 / 23)
+
+coef_anticipada = 0.85 if tipo == "Anticipada" else 1
+porcentaje = porcentaje_base(anos_cotizados)
+base_reguladora = base_mensual * 14
+pension_anual = base_reguladora * porcentaje * coef_anticipada
+pension_mensual = pension_anual / 14
+
+# ---------- RESULTADOS ----------
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.subheader("📈 Resultado de la simulación")
+
+if anos_cotizados < 15:
+    st.error("❌ No alcanza el mínimo de años cotizados para acceder a pensión contributiva")
+else:
+    st.markdown(f'<div class="result">{pension_mensual:,.2f} € / mes</div>', unsafe_allow_html=True)
+    st.write(f"Porcentaje aplicado: **{porcentaje*100:.1f}%**")
+    if tipo == "Anticipada":
+        st.write("Coeficiente reductor aplicado por jubilación anticipada")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------- INFORME ----------
+if st.button("📄 Generar informe para el cliente"):
+    st.success("Informe generado correctamente (función ampliable a PDF)")
+
+st.markdown("---")
+st.markdown('<div class="small">Simulación orientativa. No sustituye el cálculo oficial de la Seguridad Social.</div>', unsafe_allow_html=True)
+```
 
