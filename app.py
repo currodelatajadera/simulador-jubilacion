@@ -14,37 +14,69 @@ st.set_page_config(
 # -------------------------------
 st.markdown("""
 <style>
+
+/* Fondo degradado profesional */
 .stApp {
-    background-color: #f4f6f9;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
 }
 
+/* Tarjetas */
 .card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
+    background-color: #ffffff;
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+    margin-bottom: 22px;
 }
 
-h1, h2, h3 {
+/* Títulos */
+h1 {
+    color: #ffffff;
+    font-size: 42px;
+}
+
+h2, h3 {
     color: #1f2937;
 }
 
-.resultado {
-    background-color: #e8f5e9;
-    padding: 30px;
-    border-radius: 15px;
-    text-align: center;
-    font-size: 32px;
-    font-weight: bold;
-    color: #1b5e20;
+/* Texto general */
+p, label {
+    color: #111827;
 }
 
+/* Resultado destacado */
+.resultado {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    padding: 35px;
+    border-radius: 18px;
+    text-align: center;
+    font-size: 34px;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
+}
+
+/* Botón principal */
+div.stButton > button {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    font-size: 20px;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+}
+
+div.stButton > button:hover {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a);
+}
+
+/* Footer legal */
 .footer {
     font-size: 12px;
-    color: #6b7280;
+    color: #e5e7eb;
     margin-top: 30px;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
