@@ -15,50 +15,50 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Fondo degradado profesional */
+/* Fondo azul celeste claro */
 .stApp {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    background-color: #eaf3fb;
 }
 
-/* Tarjetas */
+/* Tarjetas blancas */
 .card {
     background-color: #ffffff;
     padding: 28px;
     border-radius: 18px;
-    box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0px 6px 18px rgba(0,0,0,0.12);
     margin-bottom: 22px;
 }
 
-/* Títulos */
+/* Títulos principales */
 h1 {
-    color: #ffffff;
-    font-size: 42px;
+    color: #0f172a;
+    font-size: 40px;
 }
 
+/* Subtítulos */
 h2, h3 {
-    color: #1f2937;
+    color: #1e293b;
 }
 
 /* Texto general */
-p, label {
-    color: #111827;
+p, label, span, div {
+    color: #0f172a;
 }
 
 /* Resultado destacado */
 .resultado {
-    background: linear-gradient(135deg, #16a34a, #22c55e);
+    background-color: #d1fae5;
     padding: 35px;
     border-radius: 18px;
     text-align: center;
     font-size: 34px;
     font-weight: bold;
-    color: white;
-    box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
+    color: #065f46;
 }
 
 /* Botón principal */
 div.stButton > button {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background-color: #2563eb;
     color: white;
     font-size: 20px;
     padding: 12px;
@@ -67,13 +67,13 @@ div.stButton > button {
 }
 
 div.stButton > button:hover {
-    background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    background-color: #1d4ed8;
 }
 
 /* Footer legal */
 .footer {
     font-size: 12px;
-    color: #e5e7eb;
+    color: #475569;
     margin-top: 30px;
 }
 
@@ -173,4 +173,3 @@ st.markdown("""
 Simulación orientativa. No constituye oferta vinculante ni cálculo oficial de la Seguridad Social.
 </div>
 """, unsafe_allow_html=True)
-
