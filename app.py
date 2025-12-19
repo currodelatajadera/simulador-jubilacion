@@ -1,111 +1,172 @@
 import streamlit as st
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-import tempfile
+import io
 
-# ---------------- CONFIG PÁGINA ----------------
+# -------------------------------
+# CONFIGURACIÓN GENERAL
+# -------------------------------
 st.set_page_config(
     page_title="Simulador de Jubilación",
-    page_icon="📊",
     layout="centered"
 )
 
-# ---------------- CSS ----------------
+# -------------------------------
+# ESTILOS (CSS)
+# -------------------------------
 st.markdown("""
 <style>
 body {
-    background-color: #d9f0ff;
+    background-color: #eaf4fb;
 }
 
 .main {
-    background-color: #d9f0ff;
-}
-
-h1, h2, h3, label, p {
-    color: #000000;
+    background-color: #eaf4fb;
 }
 
 .card {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+    background-color: white;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     margin-bottom: 20px;
 }
 
-.stButton > button {
-    background-color: #1f77b4;
-    color: white;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 16px;
+h1, h2, h3 {
+    color: #0a3d62;
 }
 
-.stSelectbox > div {
-    max-width: 250px;
+label {
+    font-weight: 600;
+}
+
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stSelectbox > div > div {
+    background-color: white;
+    border-radius: 8px;
+}
+
+.stButton > button {
+    background-color: #0a3d62;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+}
+
+.result {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0a3d62;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- TÍTULO ----------------
-st.title("📊 Simulador de Jubilación")
+# -------------------------------
+# TÍTULO
+# -------------------------------
+st.markdown("<h1>Simulador de Jubilación</h1>", unsafe_allow_html=True)
+st.markdown("Herramienta profesional de apoyo comercial")
 
-# ---------------- FORMULARIO ----------------
-with st.form("simulador"):
+# -------------------------------
+# TARJETA: DATOS CLIENTE
+# -------------------------------
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<h3>Datos del cliente</h3>", unsafe_allow_html=True)
+
+nombre = st.text_input("Nombre del cliente")
+anio_nacimiento = st.number_input("Año de nacimiento", min_value=1900, max_value=2025, value=1978)
+edad_jubilacion = st.number_input("Edad de jubilación prevista", min_value=60, max_value=70, value=67)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# -------------------------------
+# TARJETA: DATOS COTIZACIÓN
+# -------------------------------
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<h3>Datos de cotización</h3>", unsafe_allow_html=True)
+
+anios_cotizados = st.number_input("Años cotizados", min_value=0, max_value=50, value=35)
+base_mensual = st.number_input("Base de cotización media mensual (€)", min_value=0, value=3000)
+
+tipo_jubilacion = st.selectbox(
+    "Tipo de jubilación",
+    ["Ordinaria", "Anticipada"],
+    index=0
+)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# -------------------------------
+# BOTÓN SIMULAR
+# -------------------------------
+simular = st.button("Simular jubilación")
+
+# -------------------------------
+# CÁLCULO
+# -------------------------------
+if simular:
+    # Porcentaje según años cotizados (simplificado)
+    if anios_cotizados < 15:
+        porcentaje = 0.50
+    elif anios_cotizados < 36:
+        porcentaje = 0.75
+    else:
+        porcentaje = 1.00
+
+    # Penalización por jubilación anticipada
+    penalizacion = 0
+    if tipo_jubilacion == "Anticipada":
+        penalizacion = 0.15
+
+    pension_mensual = base_mensual * porcentaje * (1 - penalizacion)
+
+    # -------------------------------
+    # RESULTADOS
+    # -------------------------------
     st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<h3>Resultado de la simulación</h3>", unsafe_allow_html=True)
 
-    edad = st.number_input("Edad actual", min_value=18, max_value=67, value=45)
-    cotizados = st.number_input("Años cotizados", min_value=0, max_value=50, value=20)
-    base = st.number_input("Base reguladora mensual (€)", min_value=500, value=1800)
-
-    tipo = st.selectbox(
-        "Tipo de jubilación",
-        ["Ordinaria", "Anticipada"]
+    st.markdown(
+        f"<div class='result'>{pension_mensual:,.2f} € / mes</div>",
+        unsafe_allow_html=True
     )
 
-    calcular = st.form_submit_button("Simular")
+    st.write(f"**Porcentaje aplicado:** {int(porcentaje*100)} %")
+    if penalizacion > 0:
+        st.write("⚠️ Incluye penalización por jubilación anticipada")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ---------------- CÁLCULO ----------------
-if calcular:
-    if tipo == "Ordinaria":
-        porcentaje = min(100, cotizados * 2)
-    else:
-        porcentaje = min(85, cotizados * 1.8)
+    # -------------------------------
+    # PDF
+    # -------------------------------
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
 
-    pension = base * porcentaje / 100
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, 800, "Simulación de Jubilación")
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.subheader("📌 Resultado")
-    st.write(f"**Porcentaje aplicado:** {porcentaje:.1f}%")
-    st.write(f"**Pensión estimada:** {pension:.2f} € / mes")
-    st.markdown("</div>", unsafe_allow_html=True)
+    c.setFont("Helvetica", 11)
+    c.drawString(50, 760, f"Cliente: {nombre}")
+    c.drawString(50, 740, f"Año de nacimiento: {anio_nacimiento}")
+    c.drawString(50, 720, f"Edad jubilación: {edad_jubilacion}")
+    c.drawString(50, 700, f"Años cotizados: {anios_cotizados}")
+    c.drawString(50, 680, f"Base media mensual: {base_mensual} €")
+    c.drawString(50, 660, f"Tipo de jubilación: {tipo_jubilacion}")
 
-    # ---------------- PDF ----------------
-    def generar_pdf():
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-        c = canvas.Canvas(tmp.name, pagesize=A4)
-        c.setFont("Helvetica", 12)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(50, 620, f"Pensión estimada mensual: {pension_mensual:,.2f} €")
 
-        c.drawString(50, 800, "SIMULADOR DE JUBILACIÓN")
-        c.drawString(50, 760, f"Edad actual: {edad}")
-        c.drawString(50, 740, f"Años cotizados: {cotizados}")
-        c.drawString(50, 720, f"Base reguladora: {base} €")
-        c.drawString(50, 700, f"Tipo de jubilación: {tipo}")
-        c.drawString(50, 660, f"Porcentaje aplicado: {porcentaje:.1f}%")
-        c.drawString(50, 640, f"Pensión estimada: {pension:.2f} € / mes")
+    c.showPage()
+    c.save()
 
-        c.showPage()
-        c.save()
-        return tmp.name
+    buffer.seek(0)
 
-    pdf_path = generar_pdf()
-
-    with open(pdf_path, "rb") as f:
-        st.download_button(
-            label="📄 Descargar PDF",
-            data=f,
-            file_name="simulacion_jubilacion.pdf",
-            mime="application/pdf"
-        )
+    st.download_button(
+        label="📄 Descargar PDF para el cliente",
+        data=buffer,
+        file_name="simulacion_jubilacion.pdf",
+        mime="application/pdf"
+    )
