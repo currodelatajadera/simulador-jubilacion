@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # -------------------------------
-# ESTILOS PREMIUM
+# ESTILOS
 # -------------------------------
 st.markdown("""
 <style>
@@ -25,10 +25,6 @@ html, body, [class*="css"]  {
 
 body {
     background: linear-gradient(180deg, #e8f4fb 0%, #f7fbfe 100%);
-}
-
-.main {
-    background: transparent;
 }
 
 .card {
@@ -47,17 +43,6 @@ h1 {
 h3 {
     color: #145a86;
     font-weight: 600;
-}
-
-label {
-    font-weight: 500;
-}
-
-.stTextInput input,
-.stNumberInput input,
-.stSelectbox div {
-    background-color: white;
-    border-radius: 10px;
 }
 
 .stButton button {
@@ -91,7 +76,7 @@ label {
 st.markdown("<h1>Simulador de Jubilación</h1>", unsafe_allow_html=True)
 
 # -------------------------------
-# DATOS CLIENTE
+# DATOS
 # -------------------------------
 st.markdown("<div class='card'>", unsafe_allow_html=True)
 st.markdown("<h3>Datos personales</h3>", unsafe_allow_html=True)
@@ -102,15 +87,11 @@ edad_jubilacion = st.number_input("Edad de jubilación prevista", min_value=60, 
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# -------------------------------
-# DATOS COTIZACIÓN
-# -------------------------------
 st.markdown("<div class='card'>", unsafe_allow_html=True)
 st.markdown("<h3>Datos de cotización</h3>", unsafe_allow_html=True)
 
 anios_cotizados = st.number_input("Años cotizados", min_value=0, max_value=50, value=35)
 base_mensual = st.number_input("Base de cotización media mensual (€)", min_value=0, value=3000)
-
 tipo_jubilacion = st.selectbox("Tipo de jubilación", ["Ordinaria", "Anticipada"])
 
 st.markdown("</div>", unsafe_allow_html=True)
@@ -121,7 +102,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 simular = st.button("Calcular pensión")
 
 # -------------------------------
-# RESULTADOS
+# RESULTADO
 # -------------------------------
 if simular:
 
@@ -148,23 +129,20 @@ if simular:
     st.markdown("</div>", unsafe_allow_html=True)
 
     # -------------------------------
-    # PDF PREMIUM
+    # PDF
     # -------------------------------
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
-
     azul = HexColor("#1e88e5")
 
-    c.setFillColor(azul)
     c.setFont("Helvetica-Bold", 22)
+    c.setFillColor(azul)
     c.drawString(50, 800, "Simulación de Jubilación")
 
-    c.setFillColor(HexColor("#000000"))
     c.setFont("Helvetica", 12)
+    c.setFillColor(HexColor("#000000"))
 
     y = 750
-    espacio = 22
-
     datos = [
         ("Cliente", nombre),
         ("Año de nacimiento", anio_nacimiento),
@@ -174,16 +152,22 @@ if simular:
         ("Tipo de jubilación", tipo_jubilacion),
     ]
 
-    for etiqueta, valor in datos:
-        c.drawString(60, y, f"{etiqueta}: {valor}")
-        y -= espacio
+    for k, v in datos:
+        c.drawString(60, y, f"{k}: {v}")
+        y -= 22
 
-    c.setFillColor(azul)
     c.setFont("Helvetica-Bold", 16)
+    c.setFillColor(azul)
     c.drawString(60, y - 20, f"Pensión mensual estimada: {pension:,.2f} €")
 
     c.showPage()
     c.save()
     buffer.seek(0)
 
-    st.downloa
+    st.download_button(
+        label="📄 Descargar informe en PDF",
+        data=buffer,
+        file_name="simulacion_jubilacion.pdf",
+        mime="application/pdf"
+    )
+
