@@ -1,4 +1,8 @@
 import streamlit as st
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+import io
 
 # -------------------------------------------------
 # CONFIGURACIÓN GENERAL
@@ -10,17 +14,17 @@ st.set_page_config(
 )
 
 # -------------------------------------------------
-# ESTILOS PROFESIONALES (CSS)
+# ESTILOS CSS
 # -------------------------------------------------
 st.markdown("""
 <style>
 
-/* Fondo general azul celeste */
+/* Fondo azul celeste */
 .stApp {
     background-color: #eaf3fb;
 }
 
-/* Tarjetas blancas con sombra */
+/* Tarjetas */
 .card {
     background-color: #ffffff;
     padding: 30px;
@@ -29,62 +33,52 @@ st.markdown("""
     margin-bottom: 25px;
 }
 
-/* Título principal */
+/* Títulos */
 h1 {
     color: #0f172a;
-    font-size: 38px;
+    font-size: 36px;
 }
-
-/* Subtítulos */
 h2, h3 {
     color: #1e293b;
 }
 
-/* Texto general */
-p, label, span {
-    color: #0f172a;
-}
-
-/* Inputs: blancos, borde suave */
-input, textarea {
-    background-color: #ffffff !important;
-    border-radius: 10px !important;
-    border: 1px solid #cbd5e1 !important;
-}
-
-/* Inputs Streamlit */
+/* Inputs blancos */
 div[data-baseweb="input"] input {
     background-color: #ffffff !important;
     border-radius: 10px !important;
     border: 1px solid #cbd5e1 !important;
 }
 
-/* Select desplegable compacto */
-div[data-baseweb="select"] > div {
-    background-color: #ffffff !important;
-    min-height: 36px !important;
-    font-size: 14px !important;
-    border-radius: 10px !important;
-    border: 1px solid #cbd5e1 !important;
+/* SELECT: anchura y altura corregidas */
+div[data-baseweb="select"] {
+    width: 60% !important;   /* 👈 AQUÍ controlamos el ancho */
 }
 
-/* Resultado destacado */
+div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    min-height: 34px !important;
+    font-size: 14px !important;
+}
+
+/* Resultado */
 .resultado {
     background-color: #d1fae5;
     padding: 32px;
     border-radius: 18px;
     text-align: center;
-    font-size: 32px;
+    font-size: 30px;
     font-weight: bold;
     color: #065f46;
 }
 
-/* Botón simulación discreto */
+/* Botones */
 div.stButton > button {
     background-color: #2563eb;
     color: white;
-    font-size: 16px;
-    padding: 8px 18px;
+    font-size: 15px;
+    padding: 8px 16px;
     border-radius: 10px;
     border: none;
     font-weight: 500;
@@ -94,7 +88,7 @@ div.stButton > button:hover {
     background-color: #1d4ed8;
 }
 
-/* Footer legal */
+/* Footer */
 .footer {
     font-size: 12px;
     color: #475569;
@@ -113,51 +107,40 @@ st.caption("Herramienta de asesoramiento previsional para clientes")
 st.divider()
 
 # -------------------------------------------------
-# COLUMNAS
+# FORMULARIO
 # -------------------------------------------------
-col1, col2 = st.columns(2)
+with st.form("form_jubilacion"):
 
-# -------------------------------------------------
-# DATOS CLIENTE
-# -------------------------------------------------
-with col1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Datos del Cliente")
+    col1, col2 = st.columns(2)
 
-    nombre = st.text_input("Nombre del cliente", placeholder="Ej. Juan Pérez")
-    edad_actual = st.number_input("Edad actual", min_value=18, max_value=67, value=45)
-    base_media = st.number_input("Base media de cotización (€ / mes)", min_value=0, value=2000)
-    años_cotizados = st.number_input("Años cotizados", min_value=0, max_value=45, value=25)
+    with col1:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Datos del Cliente")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        nombre = st.text_input("Nombre del cliente")
+        edad_actual = st.number_input("Edad actual", 18, 67, 45)
+        base_media = st.number_input("Base media de cotización (€ / mes)", 0, 10000, 2000)
+        años_cotizados = st.number_input("Años cotizados", 0, 45, 25)
 
-# -------------------------------------------------
-# DATOS JUBILACIÓN
-# -------------------------------------------------
-with col2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Tipo de Jubilación")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    tipo_jubilacion = st.selectbox(
-        "Modalidad",
-        ["Ordinaria", "Anticipada"]
-    )
+    with col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Tipo de Jubilación")
 
-    edad_jubilacion = 65 if años_cotizados >= 38 else 67
+        tipo_jubilacion = st.selectbox(
+            "Modalidad",
+            ["Ordinaria", "Anticipada"]
+        )
 
-    st.markdown(f"""
-    **Edad legal estimada:** {edad_jubilacion} años  
-    **Años para jubilarse:** {max(0, edad_jubilacion - edad_actual)}
-    """)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    submitted = st.form_submit_button("📊 Simular jubilación")
 
 # -------------------------------------------------
-# SIMULACIÓN
+# CÁLCULO
 # -------------------------------------------------
-st.divider()
-
-if st.button("📊 Simular jubilación", use_container_width=False):
+if submitted:
 
     if años_cotizados < 15:
         porcentaje = 0
@@ -169,6 +152,7 @@ if st.button("📊 Simular jubilación", use_container_width=False):
     penalizacion = 0.85 if tipo_jubilacion == "Anticipada" else 1
     pension_mensual = base_media * porcentaje * penalizacion
 
+    # RESULTADO
     st.markdown(f"""
     <div class="resultado">
         Pensión estimada<br>
@@ -179,11 +163,44 @@ if st.button("📊 Simular jubilación", use_container_width=False):
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Detalle del cálculo")
 
-    st.write(f"Porcentaje aplicado por años cotizados: **{porcentaje*100:.1f}%**")
+    st.write(f"Cliente: **{nombre}**")
+    st.write(f"Modalidad: **{tipo_jubilacion}**")
+    st.write(f"Años cotizados: **{años_cotizados}**")
+    st.write(f"Porcentaje aplicado: **{porcentaje*100:.1f}%**")
+
     if tipo_jubilacion == "Anticipada":
         st.write("Penalización por jubilación anticipada: **-15%**")
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # -------------------------------------------------
+    # GENERAR PDF
+    # -------------------------------------------------
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("<b>Simulación de Jubilación</b>", styles["Title"]))
+    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"Cliente: {nombre}", styles["Normal"]))
+    story.append(Paragraph(f"Edad actual: {edad_actual}", styles["Normal"]))
+    story.append(Paragraph(f"Años cotizados: {años_cotizados}", styles["Normal"]))
+    story.append(Paragraph(f"Modalidad: {tipo_jubilacion}", styles["Normal"]))
+    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"<b>Pensión estimada:</b> {pension_mensual:,.2f} € / mes", styles["Normal"]))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph("Simulación orientativa. No constituye cálculo oficial.", styles["Italic"]))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    st.download_button(
+        label="📄 Descargar PDF",
+        data=buffer,
+        file_name="simulacion_jubilacion.pdf",
+        mime="application/pdf"
+    )
 
 # -------------------------------------------------
 # LEGAL
@@ -193,9 +210,3 @@ st.markdown("""
 Simulación orientativa. No constituye oferta vinculante ni cálculo oficial de la Seguridad Social.
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
