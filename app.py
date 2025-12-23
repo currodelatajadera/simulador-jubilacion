@@ -1,173 +1,126 @@
 import streamlit as st
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-import io
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-# -------------------------------
-# CONFIG
-# -------------------------------
+# -----------------------
+# CONFIGURACIÓN GENERAL
+# -----------------------
 st.set_page_config(
-    page_title="Simulador de Jubilación",
-    layout="centered"
+    page_title="Simulador Profesional de Jubilación",
+    layout="wide"
 )
 
-# -------------------------------
-# ESTILOS
-# -------------------------------
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-
-html, body, [class*="css"]  {
-    font-family: 'Inter', sans-serif;
-}
-
-body {
-    background: linear-gradient(180deg, #e8f4fb 0%, #f7fbfe 100%);
-}
-
-.card {
-    background: white;
-    padding: 28px;
-    border-radius: 18px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    margin-bottom: 25px;
-}
-
-h1 {
-    color: #0b3c5d;
-    font-weight: 700;
-}
-
-h3 {
-    color: #145a86;
-    font-weight: 600;
-}
-
-.stButton button {
-    background: linear-gradient(90deg, #1e88e5, #42a5f5);
-    color: white;
-    border-radius: 10px;
-    padding: 12px 26px;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-}
-
-.result-box {
-    background: linear-gradient(90deg, #1e88e5, #42a5f5);
-    color: white;
-    padding: 25px;
-    border-radius: 16px;
-    text-align: center;
-}
-
-.result-value {
-    font-size: 34px;
-    font-weight: 700;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------
+# -----------------------
 # TÍTULO
-# -------------------------------
-st.markdown("<h1>Simulador de Jubilación</h1>", unsafe_allow_html=True)
+# -----------------------
+st.markdown(
+    """
+    <h1 style='text-align:center;'>Simulador Profesional de Jubilación</h1>
+    <p style='text-align:center; color:gray;'>Planificación financiera clara y realista</p>
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
 
-# -------------------------------
-# DATOS
-# -------------------------------
-st.markdown("<div class='card'>", unsafe_allow_html=True)
-st.markdown("<h3>Datos personales</h3>", unsafe_allow_html=True)
+# -----------------------
+# INPUTS PRINCIPALES
+# -----------------------
+col1, col2, col3 = st.columns(3)
 
-nombre = st.text_input("Nombre del cliente")
-anio_nacimiento = st.number_input("Año de nacimiento", min_value=1900, max_value=2025, value=1975)
-edad_jubilacion = st.number_input("Edad de jubilación prevista", min_value=60, max_value=70, value=67)
+with col1:
+    st.subheader("Datos personales")
+    edad_actual = st.number_input("Edad actual", 18, 67, 45)
+    edad_jubilacion = st.number_input("Edad de jubilación", 60, 70, 67)
+    esperanza_vida = st.number_input("Esperanza de vida", 70, 100, 85)
 
-st.markdown("</div>", unsafe_allow_html=True)
+with col2:
+    st.subheader("Déficit en jubilación")
+    deficit_mensual = st.number_input("Déficit mensual estimado (€)", 0, 5000, 600)
+    inflacion = st.number_input("Inflación media anual (%)", 0.0, 5.0, 2.0, step=0.1)
 
-st.markdown("<div class='card'>", unsafe_allow_html=True)
-st.markdown("<h3>Datos de cotización</h3>", unsafe_allow_html=True)
+with col3:
+    st.subheader("Ahorro e inversión")
+    aportacion_inicial = st.number_input("Aportación inicial (€)", 0, 500000, 20000)
+    aportacion_mensual = st.number_input("Aportación mensual (€)", 0, 5000, 300)
+    rentabilidad = st.number_input("Rentabilidad anual (%)", 0.0, 10.0, 5.0, step=0.1)
 
-anios_cotizados = st.number_input("Años cotizados", min_value=0, max_value=50, value=35)
-base_mensual = st.number_input("Base de cotización media mensual (€)", min_value=0, value=3000)
-tipo_jubilacion = st.selectbox("Tipo de jubilación", ["Ordinaria", "Anticipada"])
+st.markdown("<br>", unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
+# -----------------------
+# BOTÓN CALCULAR
+# -----------------------
+calcular = st.button("Calcular simulación")
 
-# -------------------------------
-# BOTÓN
-# -------------------------------
-simular = st.button("Calcular pensión")
+# -----------------------
+# CÁLCULOS
+# -----------------------
+if calcular:
+    años_ahorro = edad_jubilacion - edad_actual
+    meses_ahorro = años_ahorro * 12
+    años_cobro = esperanza_vida - edad_jubilacion
+    meses_cobro = años_cobro * 12
 
-# -------------------------------
-# RESULTADO
-# -------------------------------
-if simular:
+    r_mensual = rentabilidad / 100 / 12
 
-    if anios_cotizados < 15:
-        porcentaje = 0.5
-    elif anios_cotizados < 36:
-        porcentaje = 0.75
-    else:
-        porcentaje = 1
+    capital = aportacion_inicial
+    capitales = []
 
-    penalizacion = 0.15 if tipo_jubilacion == "Anticipada" else 0
-    pension = base_mensual * porcentaje * (1 - penalizacion)
+    for mes in range(meses_ahorro):
+        capital = capital * (1 + r_mensual) + aportacion_mensual
+        capitales.append(capital)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<h3>Resultado estimado</h3>", unsafe_allow_html=True)
+    # Consumo del capital en jubilación
+    capital_jubilacion = capital
+    capitales_post = []
 
-    st.markdown(f"""
-    <div class="result-box">
-        <div class="result-value">{pension:,.2f} €</div>
-        <div>Pensión mensual estimada</div>
-    </div>
-    """, unsafe_allow_html=True)
+    for mes in range(meses_cobro):
+        capital_jubilacion = capital_jubilacion - deficit_mensual
+        capitales_post.append(max(capital_jubilacion, 0))
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    # -----------------------
+    # GRÁFICA
+    # -----------------------
+    st.subheader("Evolución del capital")
 
-    # -------------------------------
-    # PDF
-    # -------------------------------
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    azul = HexColor("#1e88e5")
+    fig, ax = plt.subplots(figsize=(10, 4))
 
-    c.setFont("Helvetica-Bold", 22)
-    c.setFillColor(azul)
-    c.drawString(50, 800, "Simulación de Jubilación")
-
-    c.setFont("Helvetica", 12)
-    c.setFillColor(HexColor("#000000"))
-
-    y = 750
-    datos = [
-        ("Cliente", nombre),
-        ("Año de nacimiento", anio_nacimiento),
-        ("Edad jubilación", edad_jubilacion),
-        ("Años cotizados", anios_cotizados),
-        ("Base media mensual", f"{base_mensual} €"),
-        ("Tipo de jubilación", tipo_jubilacion),
-    ]
-
-    for k, v in datos:
-        c.drawString(60, y, f"{k}: {v}")
-        y -= 22
-
-    c.setFont("Helvetica-Bold", 16)
-    c.setFillColor(azul)
-    c.drawString(60, y - 20, f"Pensión mensual estimada: {pension:,.2f} €")
-
-    c.showPage()
-    c.save()
-    buffer.seek(0)
-
-    st.download_button(
-        label="📄 Descargar informe en PDF",
-        data=buffer,
-        file_name="simulacion_jubilacion.pdf",
-        mime="application/pdf"
+    ax.plot(capitales, label="Fase de ahorro")
+    ax.plot(
+        range(len(capitales), len(capitales) + len(capitales_post)),
+        capitales_post,
+        label="Fase de jubilación"
     )
 
+    ax.set_ylabel("€")
+    ax.set_xlabel("Meses")
+    ax.legend()
+    ax.grid(True)
+
+    st.pyplot(fig)
+
+    # -----------------------
+    # TABLA RESUMEN
+    # -----------------------
+    st.subheader("Resumen numérico")
+
+    resumen = pd.DataFrame({
+        "Concepto": [
+            "Edad actual",
+            "Edad jubilación",
+            "Esperanza de vida",
+            "Capital acumulado al jubilarse",
+            "Déficit mensual",
+            "Años cubiertos con el capital"
+        ],
+        "Valor": [
+            edad_actual,
+            edad_jubilacion,
+            esperanza_vida,
+            f"{capital:,.0f} €",
+            f"{deficit_mensual} €",
+            round(capital / (deficit_mensual * 12), 1) if deficit_mensual > 0 else "∞"
+        ]
+    })
+
+    st.table(resumen)
