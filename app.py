@@ -905,7 +905,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 footer_html = """
 <div class="srg-footer">
     <div><b>Simulador SRG — Samuel Ruiz González </b></div>
-    <div>Herramienta educativa. No constituye asesoramiento financiero ni compromiso de prestación futura.</div>
+    <div>Herramienta educativa y formativa para Agentes.</div>
     <div>© 2025 Samuel Ruiz González · <a href="#">Política de privacidad</a> · <a href="#">Aviso legal</a></div>
 </div>
 """
