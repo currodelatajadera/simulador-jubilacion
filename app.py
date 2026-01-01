@@ -9,71 +9,74 @@ st.set_page_config(page_title="Simulador de Jubilación SRG", page_icon="💼", 
 #   CSS GLOBAL PREMIUM SRG
 # ============================
 
+
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 body, html {
     font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(to bottom, #e8ebef, #ffffff);
 }
 
+/* HEADER PREMIUM */
 .srg-header {
-    padding: 14px 24px;
-    margin-bottom: 18px;
-    background-color: #003366;
-}
-
-.srg-header-inner {
-    max-width: 980px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
+    padding: 24px;
+    margin-bottom: 24px;
+    background: linear-gradient(90deg, #003366, #0055aa);
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     text-align: center;
 }
 
 .srg-header-title-main {
     font-family: 'Dancing Script', cursive !important;
-    font-size: 3.2rem;        /* MÁS GRANDE */
+    font-size: 3.2rem;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
-    line-height: 1.1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .srg-header-title-sub {
-    font-family: 'Dancing Script', cursive !important;
-    font-size: 1.8rem;        /* MÁS GRANDE */
-    font-weight: 400;
-    color: #d0d8e8;
+    font-size: 1.2rem;
+    color: #dce6f5;
     margin-top: 6px;
+    font-style: italic;
 }
 
+/* TITULOS DE SECCIÓN */
 .srg-title {
-    background-color: #003366;
+    background: linear-gradient(90deg, #003366, #0055aa);
     color: white !important;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 1rem;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 1.05rem;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
+/* CAJAS DE CONTENIDO */
 .srg-box {
-    background-color: #e6eef7;
-    padding: 14px;
-    border-radius: 6px;
-    border: 1px solid #c7d4e5;
-    margin-bottom: 14px;
+    background: #fdfdfd;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #d7e1ef;
+    box-shadow: 0 6px 12px rgba(180,180,180,0.25);
+    margin-bottom: 20px;
 }
 
+/* FOOTER PREMIUM */
 .srg-footer {
-    margin-top: 30px;
-    padding: 16px 12px;
-    background-color: #003366;
+    margin-top: 40px;
+    padding: 20px;
+    background: linear-gradient(90deg, #003366, #002244);
     color: #ffffff;
     text-align: center;
-    font-size: 0.85rem;
-    border-radius: 6px 6px 0 0;
+    font-size: 0.9rem;
+    border-radius: 16px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
 }
 
 .srg-footer a {
@@ -81,15 +84,17 @@ body, html {
     text-decoration: underline;
 }
 
+/* MÉTRICAS */
 [data-testid="stMetricValue"] {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
+
 # ============================
-#   HEADER SIN LOGO
+#   HEADER SRG
 # ============================
 
 header_html = """
@@ -137,10 +142,6 @@ def calcular_evolucion_mensual(anos_hasta_jub, rentabilidad, inflacion, aportaci
 
     return lista
 
-# ============================
-#   MARCA DE AGUA DIAGONAL
-# ============================
-
 def marca_agua_srg():
     return """
     <div style="
@@ -167,10 +168,6 @@ def marca_agua_srg():
     </div>
     """
 
-# ============================
-#   PORTADA CON DEGRADADO
-# ============================
-
 def portada_srg(titulo, fecha):
     return f"""
     <div style="
@@ -189,14 +186,9 @@ def portada_srg(titulo, fecha):
     </div>
     """
 
-# ============================
-#   TABLA MENSUAL (5 COLUMNAS)
-# ============================
-
 def tabla_mensual_y_anual_html(evolucion, anos_hasta_jub):
     filas = ""
 
-    # --- Primeros 12 meses (sin mes 0) ---
     for mes in range(1, 13):
         fila = evolucion[mes]
         filas += f"""
@@ -209,7 +201,6 @@ def tabla_mensual_y_anual_html(evolucion, anos_hasta_jub):
         </tr>
         """
 
-    # --- Después año a año ---
     for ano in range(2, anos_hasta_jub + 1):
         fila = evolucion[ano * 12]
         filas += f"""
@@ -223,8 +214,6 @@ def tabla_mensual_y_anual_html(evolucion, anos_hasta_jub):
         """
 
     return filas
-
-
 # ============================================
 #   FILA 1 — DATOS PRINCIPALES
 # ============================================
@@ -404,7 +393,6 @@ with colA:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Cálculo pensión
 if modo_valido:
     pct = min(1, anos_totales / 37)
 else:
@@ -509,7 +497,6 @@ with colP1:
 
         evolucion = calcular_evolucion_mensual(anos_hasta_jub, rentabilidad, inflacion, aportacion)
 
-    # Resumen capital
     capital_total = evolucion[-1]["total"]
     capital_aportado = evolucion[-1]["aportada"]
     capital_real_final = evolucion[-1]["neta"]
@@ -536,7 +523,6 @@ with colP2:
     st.markdown('<div class="srg-title">Evolución del capital</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-    # Eliminamos el mes 0 para que la gráfica empiece en mes 1
     evolucion_sin_mes0 = evolucion[1:]
 
     anos_evol = [fila["mes"]/12 for fila in evolucion_sin_mes0]
@@ -579,7 +565,6 @@ with colP2:
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 # ============================================
 #   MODO AGENTE SRG
@@ -645,7 +630,7 @@ El objetivo mensual futuro se calcula actualizando los ingresos deseados mediant
 La brecha mensual (<b>{contexto['brecha']:,.0f} €</b>) es la diferencia entre el objetivo económico futuro y la pensión futura estimada.</p>
 
 <p><b>Cálculo del capital necesario:</b><br>
-El capital necesario (<b>{contexto['capital_necesario']:,.0f} €</b>) se obtiene descontando la renta mensual deseada durante los años de jubilación (<b>{contexto['edad_prevista_jub']} → {contexto['edad_prevista_jub'] + contexto['anos_hasta_jub']}</b>) a la rentabilidad anual asumida.</p>
+El capital necesario (<b>{contexto['capital_necesario']:,.0f} €</b>) se obtiene descontando la renta mensual deseada durante los años de jubilación a la rentabilidad anual asumida.</p>
 
 <p><b>Cálculo de la aportación mensual:</b><br>
 La aportación mensual (<b>{contexto['aportacion']:,.0f} €/mes</b>) se calcula como la cuota necesaria para alcanzar el capital objetivo en <b>{contexto['anos_hasta_jub']} años</b>, aplicando la fórmula de acumulación con aportaciones periódicas y rentabilidad compuesta.</p>
@@ -653,6 +638,7 @@ La aportación mensual (<b>{contexto['aportacion']:,.0f} €/mes</b>) se calcula
 <p><b>Evolución mensual del ahorro:</b><br>
 La tabla y la gráfica muestran la evolución del capital mes a mes, desglosando aportaciones, rendimientos, inflación y capital neto real.</p>
 """
+
 # ============================================
 #   RESUMEN EJECUTIVO SRG
 # ============================================
@@ -716,7 +702,7 @@ contexto_pdf = {
 }
 
 # ============================================
-#   INFORME CLIENTE (HTML INTERACTIVO)
+#   INFORME CLIENTE (HTML PREMIUM)
 # ============================================
 
 def informe_cliente(contexto, fig):
@@ -727,11 +713,48 @@ def informe_cliente(contexto, fig):
 <head>
 <meta charset="UTF-8">
 <title>Informe Cliente SRG</title>
+
 <style>
-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-th, td {{ border: 1px solid #ccc; padding: 6px; font-size: 0.9rem; }}
-h2 {{ color: #003366; }}
+body {{
+    font-family: 'Montserrat', sans-serif;
+    background: #f4f7fb;
+    color: #222;
+}}
+
+h2 {{
+    color: #003366;
+    border-bottom: 2px solid #ccd6ea;
+    padding-bottom: 4px;
+    margin-top: 28px;
+}}
+
+table {{
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    background: #ffffff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+}}
+
+th {{
+    background: #003366;
+    color: #ffffff;
+    padding: 8px;
+    font-size: 0.9rem;
+    text-align: left;
+}}
+
+td {{
+    border-bottom: 1px solid #e0e6f0;
+    padding: 7px;
+    font-size: 0.85rem;
+}}
+
+tr:nth-child(even) td {{
+    background: #f7f9fc;
+}}
 </style>
+
 </head>
 <body>
 
@@ -744,10 +767,10 @@ h2 {{ color: #003366; }}
 <p>Este informe muestra tu proyección de pensión futura y el plan de ahorro necesario para mantener tu nivel de vida en jubilación.</p>
 
 <h2>2. Evolución del ahorro (primeros 12 meses)</h2>
+
 <table>
 <tr><th>Mes</th><th>Aportada</th><th>Total</th><th>Inflación</th><th>Neta</th></tr>
 {tabla_mensual_y_anual_html(contexto['evolucion'], contexto['anos_hasta_jub'])}
-
 </table>
 
 <h2>3. Gráfica de evolución</h2>
@@ -763,7 +786,7 @@ h2 {{ color: #003366; }}
 """
 
 # ============================================
-#   INFORME AGENTE (HTML INTERACTIVO)
+#   INFORME AGENTE (HTML PREMIUM)
 # ============================================
 
 def informe_agente(contexto, fig):
@@ -774,11 +797,48 @@ def informe_agente(contexto, fig):
 <head>
 <meta charset="UTF-8">
 <title>Informe Agente SRG</title>
+
 <style>
-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-th, td {{ border: 1px solid #ccc; padding: 6px; font-size: 0.9rem; }}
-h2 {{ color: #003366; }}
+body {{
+    font-family: 'Montserrat', sans-serif;
+    background: #f4f7fb;
+    color: #222;
+}}
+
+h2 {{
+    color: #003366;
+    border-bottom: 2px solid #ccd6ea;
+    padding-bottom: 4px;
+    margin-top: 28px;
+}}
+
+table {{
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    background: #ffffff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+}}
+
+th {{
+    background: #003366;
+    color: #ffffff;
+    padding: 8px;
+    font-size: 0.9rem;
+    text-align: left;
+}}
+
+td {{
+    border-bottom: 1px solid #e0e6f0;
+    padding: 7px;
+    font-size: 0.85rem;
+}}
+
+tr:nth-child(even) td {{
+    background: #f7f9fc;
+}}
 </style>
+
 </head>
 <body>
 
@@ -798,11 +858,11 @@ h2 {{ color: #003366; }}
 <p><b>Inflación anual:</b> {contexto['inflacion']:.1f}%</p>
 
 <h2>3. Evolución del ahorro (primeros 12 meses)</h2>
+
 <table>
 <tr><th>Mes</th><th>Aportada</th><th>Total</th><th>Inflación</th><th>Neta</th></tr>
 {tabla_mensual_y_anual_html(contexto['evolucion'], contexto['anos_hasta_jub'])}
 </table>
-
 
 {texto_agente(contexto)}
 
