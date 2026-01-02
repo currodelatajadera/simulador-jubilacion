@@ -1,3 +1,4 @@
+
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
@@ -17,10 +18,13 @@ body, html {
     font-family: 'Montserrat', sans-serif;
 }
 
+/* HEADER SRG — degradado sin tocar tipografía */
 .srg-header {
     padding: 14px 24px;
     margin-bottom: 18px;
-    background-color: #003366;
+    background: linear-gradient(135deg, #003366, #0055A4); /* degradado SRG */
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
 }
 
 .srg-header-inner {
@@ -31,25 +35,28 @@ body, html {
     text-align: center;
 }
 
+/* TÍTULO PRINCIPAL — tipografía intacta */
 .srg-header-title-main {
     font-family: 'Dancing Script', cursive !important;
-    font-size: 3.2rem;        /* MÁS GRANDE */
+    font-size: 3.2rem;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
     line-height: 1.1;
 }
 
+/* SUBTÍTULO — tipografía intacta */
 .srg-header-title-sub {
     font-family: 'Dancing Script', cursive !important;
-    font-size: 1.8rem;        /* MÁS GRANDE */
+    font-size: 1.8rem;
     font-weight: 400;
     color: #d0d8e8;
     margin-top: 6px;
 }
 
+/* TITULOS DE SECCIÓN — ahora con degradado suave */
 .srg-title {
-    background-color: #003366;
+    background: linear-gradient(135deg, #003366, #0055A4);
     color: white !important;
     padding: 8px 12px;
     border-radius: 6px;
@@ -58,18 +65,21 @@ body, html {
     margin-bottom: 6px;
 }
 
+/* CAJAS — más limpias y coherentes con informes */
 .srg-box {
-    background-color: #e6eef7;
+    background: linear-gradient(180deg, #ffffff, #f2f6fb);
     padding: 14px;
     border-radius: 6px;
     border: 1px solid #c7d4e5;
     margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
+/* FOOTER — degradado SRG */
 .srg-footer {
     margin-top: 30px;
     padding: 16px 12px;
-    background-color: #003366;
+    background: linear-gradient(135deg, #003366, #0055A4);
     color: #ffffff;
     text-align: center;
     font-size: 0.85rem;
@@ -81,6 +91,7 @@ body, html {
     text-decoration: underline;
 }
 
+/* MÉTRICAS */
 [data-testid="stMetricValue"] {
     font-size: 1.1rem;
 }
@@ -252,6 +263,14 @@ with col1:
         75, 100, 85,
         help="Años que se estima que vivirás. Se usa para calcular cuántos años necesitarás ingresos en jubilación."
     )
+# --- Corrección suave de edades para evitar errores ---
+if edad_actual >= edad_prevista_jub:
+    st.warning("La edad prevista de jubilación debe ser mayor que la edad actual. Se ajusta automáticamente.")
+    edad_prevista_jub = edad_actual + 1
+
+if esperanza_vida <= edad_prevista_jub:
+    st.warning("La esperanza de vida debe ser mayor que la edad de jubilación. Se ajusta automáticamente.")
+    esperanza_vida = edad_prevista_jub + 1
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -464,7 +483,21 @@ with colD:
 
     st.metric("Brecha mensual a cubrir", f"{brecha:,.0f} €")
 
+    with st.expander("¿Qué es la brecha?"):
+        st.markdown("""
+La **brecha** es la diferencia entre:
+
+- lo que necesitarás cada mes en jubilación (tu *objetivo económico* o tus *gastos reales*),  
+y  
+- la pensión pública futura estimada.
+
+En términos prácticos, la brecha representa **cuánto dinero faltaría cada mes** para mantener tu nivel de vida.
+
+El plan de ahorro SRG se diseña precisamente para **cubrir esa brecha** de forma realista, sostenible y adaptada a tu situación personal.
+""")
+
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ============================================
 #   PLAN DE AHORRO
@@ -645,7 +678,7 @@ El objetivo mensual futuro se calcula actualizando los ingresos deseados mediant
 La brecha mensual (<b>{contexto['brecha']:,.0f} €</b>) es la diferencia entre el objetivo económico futuro y la pensión futura estimada.</p>
 
 <p><b>Cálculo del capital necesario:</b><br>
-El capital necesario (<b>{contexto['capital_necesario']:,.0f} €</b>) se obtiene descontando la renta mensual deseada durante los años de jubilación (<b>{contexto['edad_prevista_jub']} → {contexto['edad_prevista_jub'] + contexto['anos_hasta_jub']}</b>) a la rentabilidad anual asumida.</p>
+El capital necesario (<b>{contexto['capital_necesario']:,.0f} €</b>) se obtiene descontando la renta mensual deseada durante los años de jubilación a la rentabilidad anual asumida.</p>
 
 <p><b>Cálculo de la aportación mensual:</b><br>
 La aportación mensual (<b>{contexto['aportacion']:,.0f} €/mes</b>) se calcula como la cuota necesaria para alcanzar el capital objetivo en <b>{contexto['anos_hasta_jub']} años</b>, aplicando la fórmula de acumulación con aportaciones periódicas y rentabilidad compuesta.</p>
@@ -653,6 +686,663 @@ La aportación mensual (<b>{contexto['aportacion']:,.0f} €/mes</b>) se calcula
 <p><b>Evolución mensual del ahorro:</b><br>
 La tabla y la gráfica muestran la evolución del capital mes a mes, desglosando aportaciones, rendimientos, inflación y capital neto real.</p>
 """
+
+def informe_cliente(contexto, fig):
+    fecha = datetime.date.today().strftime("%d/%m/%Y")
+
+    html = f"""
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Informe Cliente SRG</title>
+
+<style>
+    body {{
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6fb;
+        color: #222;
+    }}
+
+    /* PORTADA */
+   .srg-cover {{
+    height: 260px; /* altura compacta */
+    background: linear-gradient(135deg, #003366, #0055A4);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 4px solid rgba(255,255,255,0.25); /* toque premium */
+    }}
+
+
+    .srg-cover-title {{
+        font-size: 2.4rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 0.8rem;
+    }}
+
+    .srg-cover-subtitle {{
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }}
+
+    .srg-cover-client {{
+        font-size: 1.1rem;
+        margin-bottom: 0.3rem;
+    }}
+
+    .srg-cover-date {{
+        font-size: 0.95rem;
+        opacity: 0.85;
+        margin-bottom: 2.5rem;
+    }}
+
+    .srg-cover-footer-line {{
+        width: 240px;
+        height: 1px;
+        background-color: rgba(255, 255, 255, 0.7);
+        margin-top: 1rem;
+    }}
+
+    .srg-cover-footer-text {{
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+        letter-spacing: 0.05em;
+    }}
+
+    /* CONTENEDOR */
+    .srg-container {{
+        max-width: 900px;
+        margin: 40px auto 60px auto;
+        background-color: #ffffff;
+        padding: 32px 40px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+        border-radius: 12px;
+    }}
+
+    h2 {{
+        color: #003366;
+        font-size: 1.4rem;
+        margin-top: 1.8rem;
+        margin-bottom: 0.8rem;
+        position: relative;
+        padding-left: 14px;
+    }}
+
+    h2::before {{
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.15rem;
+        width: 4px;
+        height: 1.3rem;
+        background-color: #0055A4;
+        border-radius: 4px;
+    }}
+
+    p {{
+        line-height: 1.55;
+        font-size: 0.98rem;
+        margin-bottom: 0.7rem;
+    }}
+
+    /* TARJETAS RESUMEN */
+    .srg-cards {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 10px;
+        margin-bottom: 8px;
+    }}
+
+    .srg-card {{
+        background-color: #f7f9fc;
+        border-radius: 10px;
+        padding: 12px 14px;
+        border: 1px solid #e1e6f0;
+    }}
+
+    .srg-card-label {{
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #0055A4;
+        margin-bottom: 2px;
+    }}
+
+    .srg-card-value {{
+        font-size: 1.1rem;
+        font-weight: 600;
+    }}
+
+    /* TABLAS */
+    .srg-table {{
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 0.86rem;
+    }}
+
+    .srg-table th {{
+        background-color: #0055A4;
+        color: #ffffff;
+        padding: 7px;
+        text-align: left;
+        font-weight: 600;
+    }}
+
+    .srg-table td {{
+        border-bottom: 1px solid #e1e6f0;
+        padding: 6px 7px;
+    }}
+
+    .srg-table tr:nth-child(even) td {{
+        background-color: #f7f9fc;
+    }}
+
+    /* CAJAS DESTACADAS */
+    .srg-highlight-box {{
+        border: 1px solid #0055A4;
+        border-radius: 10px;
+        padding: 12px 16px;
+        background-color: #f9fbff;
+        margin-top: 8px;
+    }}
+
+    /* GRÁFICA */
+    .srg-chart-container {{
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        border: 1px solid #e1e6f0;
+    }}
+
+    /* FOOTER */
+    .srg-footer {{
+        text-align: center;
+        font-size: 0.78rem;
+        color: #777;
+        margin: 30px 0 10px 0;
+    }}
+
+    .srg-footer-line {{
+        width: 100%;
+        height: 1px;
+        background-color: #e1e6f0;
+        margin-bottom: 6px;
+    }}
+</style>
+</head>
+
+<body>
+
+<!-- PORTADA -->
+<div class="srg-cover">
+    <div class="srg-cover-title">Informe de Proyección de Jubilación SRG</div>
+    <div class="srg-cover-subtitle">Simulación personalizada</div>
+
+    <div class="srg-cover-client">
+        Informe para: <b>{contexto['nombre_cliente'] or "Cliente SRG"}</b>
+    </div>
+
+    <div class="srg-cover-date">
+        Fecha de generación: {fecha}
+    </div>
+
+    <div class="srg-cover-footer-line"></div>
+    <div class="srg-cover-footer-text">
+        SRG Consultora Financiera · Herramienta de planificación y educación financiera
+    </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="srg-container">
+
+    <h2>1. Resumen ejecutivo</h2>
+    <p>Este informe resume tu situación futura de jubilación y el plan de ahorro necesario para mantener tu nivel de vida.</p>
+
+    <div class="srg-cards">
+        <div class="srg-card">
+            <div class="srg-card-label">Pensión futura estimada</div>
+            <div class="srg-card-value">{contexto['pension_futura']:,.0f} €/mes</div>
+        </div>
+
+        <div class="srg-card">
+            <div class="srg-card-label">Objetivo mensual futuro</div>
+            <div class="srg-card-value">{contexto['objetivo_futuro']:,.0f} €</div>
+        </div>
+
+        <div class="srg-card">
+            <div class="srg-card-label">Brecha mensual</div>
+            <div class="srg-card-value">{contexto['brecha']:,.0f} €</div>
+        </div>
+
+        <div class="srg-card">
+            <div class="srg-card-label">Aportación mensual recomendada</div>
+            <div class="srg-card-value">{contexto['aportacion']:,.0f} €/mes</div>
+        </div>
+    </div>
+
+    <h2>2. Datos del cliente</h2>
+    <table class="srg-table">
+        <tr><th>Campo</th><th>Valor</th></tr>
+        <tr><td>Nombre</td><td>{contexto['nombre_cliente']}</td></tr>
+        <tr><td>Email</td><td>{contexto['email_cliente']}</td></tr>
+        <tr><td>Teléfono</td><td>{contexto['telefono_cliente']}</td></tr>
+        <tr><td>Edad actual</td><td>{contexto['edad_actual']} años</td></tr>
+        <tr><td>Edad prevista de jubilación</td><td>{contexto['edad_prevista_jub']} años</td></tr>
+    </table>
+
+    <h2>3. Evolución del ahorro</h2>
+    <table class="srg-table">
+        <tr>
+            <th>Mes</th>
+            <th>Aportación acumulada</th>
+            <th>Capital total</th>
+            <th>Inflación</th>
+            <th>Neto real</th>
+        </tr>
+        {tabla_mensual_y_anual_html(contexto['evolucion'], contexto['anos_hasta_jub'])}
+    </table>
+
+    <h2>4. Gráfica de evolución</h2>
+    <div class="srg-chart-container">
+        {fig.to_html(include_plotlyjs='cdn', full_html=False)}
+    </div>
+
+    <h2>5. Explicación de tus resultados</h2>
+
+<div class="srg-highlight-box">
+    <p><b>Cómo se calcula tu pensión futura:</b><br>
+    Tu pensión pública estimada se obtiene a partir de los años cotizados, el tipo de jubilación elegido y la revalorización anual prevista. Esto nos da una estimación realista de lo que podrías cobrar cada mes cuando te jubiles.</p>
+
+    <p><b>Cómo calculamos tu objetivo económico:</b><br>
+    Para mantener tu nivel de vida en el futuro, actualizamos tus gastos deseados aplicando la inflación durante los próximos 
+    <b>{contexto['anos_hasta_jub']} años</b>. Así obtenemos el ingreso mensual que necesitarás en tu jubilación.</p>
+
+    <p><b>Qué es la brecha mensual:</b><br>
+    Es la diferencia entre lo que necesitarás para vivir y lo que aportará tu pensión pública. En tu caso, esta brecha es de 
+    <b>{contexto['brecha']:,.0f} €</b> al mes.</p>
+
+    <p><b>Cómo calculamos el capital necesario:</b><br>
+    Para cubrir esa brecha durante tus años de jubilación, estimamos el capital total que deberías tener acumulado al jubilarte: 
+    <b>{contexto['capital_necesario']:,.0f} €</b>.</p>
+
+    <p><b>Cómo se obtiene tu aportación mensual recomendada:</b><br>
+    Calculamos cuánto deberías ahorrar cada mes desde hoy hasta tu jubilación para alcanzar ese capital, teniendo en cuenta una rentabilidad anual estimada del 
+    <b>{contexto['rentabilidad']*100:.1f}%</b>. El resultado es una aportación mensual aproximada de 
+    <b>{contexto['aportacion']:,.0f} €/mes</b>.</p>
+
+    <p><b>Qué representa la tabla y la gráfica:</b><br>
+    Muestran cómo crecería tu ahorro con el tiempo, mes a mes, combinando tus aportaciones y los rendimientos generados.</p>
+</div>
+
+<h2>6. Conclusión personalizada</h2>
+<p><b>Estás dando un paso importante hacia una jubilación tranquila y bien planificada.</b></p>
+<p>Este informe te muestra de forma clara cuánto necesitarás, cuál será tu pensión pública y qué esfuerzo de ahorro te permitirá llegar a tu objetivo.</p>
+<p>Lo más importante es empezar cuanto antes y revisar el plan periódicamente para adaptarlo a tu situación personal.</p>
+
+
+    <div class="srg-footer">
+        <div class="srg-footer-line"></div>
+        <div>Informe generado automáticamente por SRG Consultora Financiera.</div>
+        <div>{datetime.date.today().year}</div>
+    </div>
+
+</div>
+</body>
+</html>
+"""
+    return html
+
+def informe_agente(contexto, fig):
+    fecha = datetime.date.today().strftime("%d/%m/%Y")
+
+    html = f"""
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Informe Agente SRG</title>
+
+<style>
+    body {{
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6fb;
+        color: #222;
+    }}
+
+    /* PORTADA */
+    .srg-cover {{
+    height: 260px; /* altura compacta */
+    background: linear-gradient(135deg, #003366, #0055A4);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 4px solid rgba(255,255,255,0.25); /* toque premium */
+}}
+
+    .srg-cover-title {{
+        font-size: 2.4rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 0.8rem;
+    }}
+
+    .srg-cover-subtitle {{
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }}
+
+    .srg-cover-client {{
+        font-size: 1.1rem;
+        margin-bottom: 0.3rem;
+    }}
+
+    .srg-cover-date {{
+        font-size: 0.95rem;
+        opacity: 0.85;
+        margin-bottom: 2.5rem;
+    }}
+
+    .srg-cover-footer-line {{
+        width: 240px;
+        height: 1px;
+        background-color: rgba(255, 255, 255, 0.7);
+        margin-top: 1rem;
+    }}
+
+    .srg-cover-footer-text {{
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+        letter-spacing: 0.05em;
+    }}
+
+    /* CONTENEDOR */
+    .srg-container {{
+        max-width: 950px;
+        margin: 40px auto 60px auto;
+        background-color: #ffffff;
+        padding: 32px 40px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+        border-radius: 12px;
+    }}
+
+    h2 {{
+        color: #003366;
+        font-size: 1.4rem;
+        margin-top: 1.8rem;
+        margin-bottom: 0.8rem;
+        position: relative;
+        padding-left: 14px;
+    }}
+
+    h2::before {{
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.15rem;
+        width: 4px;
+        height: 1.3rem;
+        background-color: #0055A4;
+        border-radius: 4px;
+    }}
+
+    p {{
+        line-height: 1.55;
+        font-size: 0.98rem;
+        margin-bottom: 0.7rem;
+    }}
+
+    /* TABLAS */
+    .srg-table {{
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 0.86rem;
+    }}
+
+    .srg-table th {{
+        background-color: #0055A4;
+        color: #ffffff;
+        padding: 7px;
+        text-align: left;
+        font-weight: 600;
+    }}
+
+    .srg-table td {{
+        border-bottom: 1px solid #e1e6f0;
+        padding: 6px 7px;
+    }}
+
+    .srg-table tr:nth-child(even) td {{
+        background-color: #f7f9fc;
+    }}
+
+    /* CAJAS DESTACADAS */
+    .srg-highlight-box {{
+        border: 1px solid #0055A4;
+        border-radius: 10px;
+        padding: 12px 16px;
+        background-color: #f9fbff;
+        margin-top: 8px;
+    }}
+
+    /* GRÁFICA */
+    .srg-chart-container {{
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        border: 1px solid #e1e6f0;
+    }}
+
+    /* FOOTER */
+    .srg-footer {{
+        text-align: center;
+        font-size: 0.78rem;
+        color: #777;
+        margin: 30px 0 10px 0;
+    }}
+
+    .srg-footer-line {{
+        width: 100%;
+        height: 1px;
+        background-color: #e1e6f0;
+        margin-bottom: 6px;
+    }}
+</style>
+</head>
+
+<body>
+
+<!-- PORTADA -->
+<div class="srg-cover">
+    <div class="srg-cover-title">Informe Técnico SRG</div>
+    <div class="srg-cover-subtitle">Uso interno para agente</div>
+
+    <div class="srg-cover-client">
+        Cliente: <b>{contexto['nombre_cliente'] or "Cliente SRG"}</b>
+    </div>
+
+    <div class="srg-cover-date">
+        Fecha de generación: {fecha}
+    </div>
+
+    <div class="srg-cover-footer-line"></div>
+    <div class="srg-cover-footer-text">
+        SRG Consultora Financiera · Soporte técnico para el análisis de jubilación
+    </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="srg-container">
+
+    <h2>1. Resumen técnico</h2>
+    <p>Este informe está diseñado como soporte para el agente, con foco en los parámetros técnicos, hipótesis y cálculos utilizados en la simulación.</p>
+
+    <div class="srg-highlight-box">
+        <p><b>Pensión futura estimada:</b> {contexto['pension_futura']:,.0f} €/mes</p>
+        <p><b>Brecha mensual estimada:</b> {contexto['brecha']:,.0f} €</p>
+        <p><b>Aportación mensual recomendada:</b> {contexto['aportacion']:,.0f} €/mes</p>
+    </div>
+
+    <h2>2. Datos del cliente</h2>
+    <table class="srg-table">
+        <tr><th>Campo</th><th>Valor</th></tr>
+        <tr><td>Nombre</td><td>{contexto['nombre_cliente']}</td></tr>
+        <tr><td>Email</td><td>{contexto['email_cliente']}</td></tr>
+        <tr><td>Teléfono</td><td>{contexto['telefono_cliente']}</td></tr>
+        <tr><td>Edad actual</td><td>{contexto['edad_actual']} años</td></tr>
+        <tr><td>Edad prevista de jubilación</td><td>{contexto['edad_prevista_jub']} años</td></tr>
+        <tr><td>Años cotizados hoy</td><td>{contexto['anos_cotizados_hoy']} años</td></tr>
+        <tr><td>Años futuros hasta jubilación</td><td>{contexto['anos_futuros']} años</td></tr>
+    </table>
+
+    <h2>3. Parámetros y supuestos</h2>
+    <div class="srg-highlight-box">
+        <p><b>Tipo de jubilación:</b> {contexto['tipo_jubilacion']}</p>
+        <p><b>Coeficiente aplicado:</b> {contexto['coef_ajuste']:.3f}</p>
+        <p><b>Rentabilidad anual asumida:</b> {contexto['rentabilidad']*100:.1f}%</p>
+        <p><b>Inflación anual asumida:</b> {contexto['inflacion']:.1f}%</p>
+        <p><b>Años hasta la jubilación:</b> {contexto['anos_hasta_jub']} años</p>
+        <p><b>Años estimados en jubilación:</b> {contexto['anos_jubilacion']} años</p>
+    </div>
+<h2>4. Explicación técnica detallada para el agente</h2>
+
+<div class="srg-highlight-box">
+    <p><b>Cálculo de la pensión pública:</b><br>
+    La pensión futura se obtiene aplicando el porcentaje de base reguladora correspondiente a los años cotizados 
+    (<b>{contexto['anos_cotizados_hoy'] + contexto['anos_futuros']} años</b>) 
+    y ajustándolo por el coeficiente de jubilación 
+    (<b>{contexto['coef_ajuste']:.3f}</b>) según la modalidad seleccionada 
+    (<b>{contexto['tipo_jubilacion']}</b>). Posteriormente se proyecta hasta la edad de jubilación aplicando la revalorización anual.</p>
+
+    <p><b>Cálculo del objetivo económico:</b><br>
+    El objetivo mensual futuro se calcula actualizando los ingresos deseados mediante la inflación anual durante 
+    <b>{contexto['anos_hasta_jub']} años</b>.</p>
+
+    <p><b>Cálculo de la brecha:</b><br>
+    La brecha mensual (<b>{contexto['brecha']:,.0f} €</b>) es la diferencia entre el objetivo económico futuro 
+    (<b>{contexto['objetivo_futuro']:,.0f} €</b>) y la pensión futura estimada 
+    (<b>{contexto['pension_futura']:,.0f} €/mes</b>).</p>
+
+    <p><b>Cálculo del capital necesario:</b><br>
+    El capital necesario (<b>{contexto['capital_necesario']:,.0f} €</b>) se obtiene descontando la renta mensual deseada 
+    durante los años de jubilación (<b>{contexto['anos_jubilacion']} años</b>) a la rentabilidad anual asumida 
+    (<b>{contexto['rentabilidad']*100:.1f}%</b>).</p>
+
+    <p><b>Cálculo de la aportación mensual:</b><br>
+    La aportación mensual (<b>{contexto['aportacion']:,.0f} €/mes</b>) se calcula como la cuota necesaria para alcanzar 
+    el capital objetivo en <b>{contexto['anos_hasta_jub']} años</b>, aplicando la fórmula de acumulación con aportaciones 
+    periódicas y rentabilidad compuesta.</p>
+
+    <p><b>Evolución mensual del ahorro:</b><br>
+    La tabla y la gráfica muestran la evolución del capital mes a mes, desglosando aportaciones, rendimientos, inflación 
+    y capital neto real.</p>
+</div>
+
+    <h2>4. Detalle de la brecha y capital objetivo</h2>
+    <p>La brecha se ha calculado como la diferencia entre el objetivo mensual futuro del cliente y la pensión pública proyectada.</p>
+
+    <div class="srg-highlight-box">
+        <p><b>Objetivo mensual futuro:</b> {contexto['objetivo_futuro']:,.0f} €</p>
+        <p><b>Brecha mensual:</b> {contexto['brecha']:,.0f} €</p>
+        <p><b>Capital necesario al inicio de la jubilación:</b> {contexto['capital_necesario']:,.0f} €</p>
+        <p><b>Aportación mensual estimada:</b> {contexto['aportacion']:,.0f} €/mes</p>
+    </div>
+<h2>4. Explicación técnica detallada para el agente</h2>
+
+<div class="srg-highlight-box">
+    <p><b>Cálculo de la pensión pública:</b><br>
+    La pensión futura se obtiene aplicando el porcentaje de base reguladora correspondiente a los años cotizados 
+    (<b>{contexto['anos_cotizados_hoy'] + contexto['anos_futuros']} años</b>) 
+    y ajustándolo por el coeficiente de jubilación 
+    (<b>{contexto['coef_ajuste']:.3f}</b>) según la modalidad seleccionada 
+    (<b>{contexto['tipo_jubilacion']}</b>). Posteriormente se proyecta hasta la edad de jubilación aplicando la revalorización anual.</p>
+
+    <p><b>Cálculo del objetivo económico:</b><br>
+    El objetivo mensual futuro se calcula actualizando los ingresos deseados mediante la inflación anual durante 
+    <b>{contexto['anos_hasta_jub']} años</b>.</p>
+
+    <p><b>Cálculo de la brecha:</b><br>
+    La brecha mensual (<b>{contexto['brecha']:,.0f} €</b>) es la diferencia entre el objetivo económico futuro 
+    (<b>{contexto['objetivo_futuro']:,.0f} €</b>) y la pensión futura estimada 
+    (<b>{contexto['pension_futura']:,.0f} €/mes</b>).</p>
+
+    <p><b>Cálculo del capital necesario:</b><br>
+    El capital necesario (<b>{contexto['capital_necesario']:,.0f} €</b>) se obtiene descontando la renta mensual deseada 
+    durante los años de jubilación (<b>{contexto['anos_jubilacion']} años</b>) a la rentabilidad anual asumida 
+    (<b>{contexto['rentabilidad']*100:.1f}%</b>).</p>
+
+    <p><b>Cálculo de la aportación mensual:</b><br>
+    La aportación mensual (<b>{contexto['aportacion']:,.0f} €/mes</b>) se calcula como la cuota necesaria para alcanzar 
+    el capital objetivo en <b>{contexto['anos_hasta_jub']} años</b>, aplicando la fórmula de acumulación con aportaciones 
+    periódicas y rentabilidad compuesta.</p>
+
+    <p><b>Evolución mensual del ahorro:</b><br>
+    La tabla y la gráfica muestran la evolución del capital mes a mes, desglosando aportaciones, rendimientos, inflación 
+    y capital neto real.</p>
+</div>
+
+    <h2>5. Evolución del ahorro</h2>
+    <p>La siguiente tabla resume la evolución del capital bajo las hipótesis de aportaciones periódicas, rentabilidad e inflación.</p>
+
+    <table class="srg-table">
+        <tr>
+            <th>Mes</th>
+            <th>Aportación acumulada</th>
+            <th>Capital total</th>
+            <th>Inflación</th>
+            <th>Capital neto real</th>
+        </tr>
+        {tabla_mensual_y_anual_html(contexto['evolucion'], contexto['anos_hasta_jub'])}
+    </table>
+
+    <h2>6. Gráfica de evolución</h2>
+    <div class="srg-chart-container">
+        {fig.to_html(include_plotlyjs='cdn', full_html=False)}
+    </div>
+
+    <h2>7. Comentario técnico para el agente</h2>
+    <p>Este caso ilustra la importancia de combinar la pensión pública con un vehículo de ahorro privado que permita cubrir la brecha identificada.</p>
+    <p>Este documento no constituye recomendación personalizada de inversión, sino soporte técnico para la planificación.</p>
+
+    <div class="srg-footer">
+        <div class="srg-footer-line"></div>
+        <div>Informe técnico interno para agentes SRG.</div>
+        <div>SRG Consultora Financiera · {datetime.date.today().year}</div>
+    </div>
+
+</div>
+</body>
+</html>
+"""
+    return html
+
+
 # ============================================
 #   RESUMEN EJECUTIVO SRG
 # ============================================
@@ -677,24 +1367,34 @@ with colR4:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-#   SELECCIÓN TIPO DE INFORME
+#   FILA — GENERAR INFORME + DESCARGAR INFORME
 # ============================================
 
-st.markdown('<div class="srg-title">Generar informe SRG</div>', unsafe_allow_html=True)
-st.markdown('<div class="srg-box">', unsafe_allow_html=True)
+col_gen, col_desc = st.columns([1, 1])
 
-tipo_informe = st.radio(
-    "Selecciona el tipo de informe a generar:",
-    ["Cliente", "Agente"],
-    horizontal=True
-)
+# -------- COLUMNA 1: GENERAR INFORME --------
+with col_gen:
+    st.markdown('<div class="srg-title">Generar informe</div>', unsafe_allow_html=True)
+    st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+    subcol1, subcol2 = st.columns([1, 1])
 
-# ============================================
-#   CONTEXTO PARA EL INFORME
-# ============================================
+    with subcol1:
+        tipo_informe = st.radio(
+            "Tipo de informe",
+            ["Cliente", "Agente"],
+            help="Selecciona el tipo de informe que deseas generar."
+        )
 
+    with subcol2:
+        with st.expander("Datos del cliente"):
+            nombre_cliente = st.text_input("Nombre del cliente")
+            email_cliente = st.text_input("Email del cliente")
+            telefono_cliente = st.text_input("Teléfono del cliente")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# -------- CONTEXTO DEL INFORME --------
 contexto_pdf = {
     "edad_actual": edad_actual,
     "edad_prevista_jub": edad_prevista_jub,
@@ -712,109 +1412,13 @@ contexto_pdf = {
     "inflacion": inflacion,
     "anos_hasta_jub": anos_hasta_jub,
     "anos_jubilacion": anos_jubilacion,
-    "evolucion": evolucion
+    "evolucion": evolucion,
+    "nombre_cliente": nombre_cliente,
+    "email_cliente": email_cliente,
+    "telefono_cliente": telefono_cliente
 }
 
-# ============================================
-#   INFORME CLIENTE (HTML INTERACTIVO)
-# ============================================
-
-def informe_cliente(contexto, fig):
-    fecha = datetime.date.today().strftime("%d/%m/%Y")
-
-    return f"""
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Informe Cliente SRG</title>
-<style>
-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-th, td {{ border: 1px solid #ccc; padding: 6px; font-size: 0.9rem; }}
-h2 {{ color: #003366; }}
-</style>
-</head>
-<body>
-
-{marca_agua_srg()}
-{portada_srg("Informe de Proyección de Pensión y Ahorro", fecha)}
-
-<div style="margin: 30px;">
-
-<h2>1. Resumen</h2>
-<p>Este informe muestra tu proyección de pensión futura y el plan de ahorro necesario para mantener tu nivel de vida en jubilación.</p>
-
-<h2>2. Evolución del ahorro (primeros 12 meses)</h2>
-<table>
-<tr><th>Mes</th><th>Aportada</th><th>Total</th><th>Inflación</th><th>Neta</th></tr>
-{tabla_mensual_y_anual_html(contexto['evolucion'], contexto['anos_hasta_jub'])}
-
-</table>
-
-<h2>3. Gráfica de evolución</h2>
-<div>
-    {fig.to_html(include_plotlyjs='cdn', full_html=False)}
-</div>
-
-{texto_cliente(contexto)}
-
-</div>
-</body>
-</html>
-"""
-
-# ============================================
-#   INFORME AGENTE (HTML INTERACTIVO)
-# ============================================
-
-def informe_agente(contexto, fig):
-    fecha = datetime.date.today().strftime("%d/%m/%Y")
-
-    return f"""
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Informe Agente SRG</title>
-<style>
-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-th, td {{ border: 1px solid #ccc; padding: 6px; font-size: 0.9rem; }}
-h2 {{ color: #003366; }}
-</style>
-</head>
-<body>
-
-{marca_agua_srg()}
-{portada_srg("Informe de Proyección de Pensión y Ahorro", fecha)}
-
-<div style="margin: 30px;">
-
-<h2>1. Gráfica de evolución</h2>
-<div>
-    {fig.to_html(include_plotlyjs='cdn', full_html=False)}
-</div>
-
-<h2>2. Datos técnicos</h2>
-<p><b>Coeficiente aplicado:</b> {contexto['coef_ajuste']:.3f}</p>
-<p><b>Rentabilidad anual:</b> {contexto['rentabilidad']*100:.1f}%</p>
-<p><b>Inflación anual:</b> {contexto['inflacion']:.1f}%</p>
-
-<h2>3. Evolución del ahorro (primeros 12 meses)</h2>
-<table>
-<tr><th>Mes</th><th>Aportada</th><th>Total</th><th>Inflación</th><th>Neta</th></tr>
-{tabla_mensual_y_anual_html(contexto['evolucion'], contexto['anos_hasta_jub'])}
-</table>
-
-
-{texto_agente(contexto)}
-
-</div>
-</body>
-</html>
-"""
-
-# ============================================
-#   GENERAR HTML DEL INFORME
-# ============================================
-
+# -------- GENERAR HTML DEL INFORME --------
 if tipo_informe == "Cliente":
     html_informe = informe_cliente(contexto_pdf, fig)
 else:
@@ -822,21 +1426,35 @@ else:
 
 bytes_informe = html_informe.encode("utf-8")
 
-# ============================================
-#   BOTÓN DE DESCARGA
-# ============================================
+# -------- COLUMNA 2: DESCARGAR INFORME --------
+with col_desc:
+    st.markdown('<div class="srg-title">Descargar informe</div>', unsafe_allow_html=True)
+    st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-st.markdown('<div class="srg-title">Descargar informe</div>', unsafe_allow_html=True)
-st.markdown('<div class="srg-box">', unsafe_allow_html=True)
+    with st.expander("Resumen del informe"):
+        st.write(f"**Pensión futura estimada:** {pension_futura:,.0f} €/mes")
+        st.write(f"**Objetivo mensual futuro:** {objetivo_futuro:,.0f} €")
+        st.write(f"**Gastos futuros estimados:** {gastos_futuros:,.0f} €")
+        st.write(f"**Brecha mensual:** {brecha:,.0f} €")
+        st.write(f"**Aportación mensual recomendada:** {aportacion:,.0f} €")
 
-st.download_button(
-    label="Descargar informe SRG (HTML imprimible)",
-    data=bytes_informe,
-    file_name="informe_jubilacion_srg.html",
-    mime="text/html"
-)
+    if nombre_cliente:
+        st.write("---")
+        st.write("### Datos del cliente")
+        st.write(f"**Nombre:** {nombre_cliente}")
+        st.write(f"**Email:** {email_cliente}")
+        st.write(f"**Teléfono:** {telefono_cliente}")
 
-st.markdown('</div>', unsafe_allow_html=True)
+
+
+    st.download_button(
+        label="Descargar informe SRG (HTML imprimible)",
+        data=bytes_informe,
+        file_name="informe_jubilacion_srg.html",
+        mime="text/html"
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
 #   FOOTER PROFESIONAL SRG
