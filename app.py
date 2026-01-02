@@ -1367,30 +1367,47 @@ with colR4:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-#   FILA — GENERAR INFORME + DESCARGAR INFORME
+#   FILA — GENERAR INFORME + DESCARGAR INFORME (VERSIÓN SRG PREMIUM)
 # ============================================
 
+# --- CSS PREMIUM PARA LOS PANELES ---
+st.markdown("""
+<style>
+.srg-panel {
+    background: linear-gradient(180deg, #ffffff, #f2f6fb);
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid #c7d4e5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 12px;
+}
+.srg-panel h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.05rem;
+    color: #003366;
+    font-weight: 700;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- COLUMNAS PRINCIPALES ---
 col_gen, col_desc = st.columns([1, 1])
 
 # -------- COLUMNA 1: GENERAR INFORME --------
 with col_gen:
-    st.markdown('<div class="srg-title">Generar informe</div>', unsafe_allow_html=True)
-    st.markdown('<div class="srg-box">', unsafe_allow_html=True)
+    st.markdown('<div class="srg-panel"><h4>Generar informe</h4>', unsafe_allow_html=True)
 
-    subcol1, subcol2 = st.columns([1, 1])
+    tipo_informe = st.radio(
+        "Tipo de informe",
+        ["Cliente", "Agente"],
+        horizontal=True,
+        help="Selecciona el tipo de informe que deseas generar."
+    )
 
-    with subcol1:
-        tipo_informe = st.radio(
-            "Tipo de informe",
-            ["Cliente", "Agente"],
-            help="Selecciona el tipo de informe que deseas generar."
-        )
-
-    with subcol2:
-        with st.expander("Datos del cliente"):
-            nombre_cliente = st.text_input("Nombre del cliente")
-            email_cliente = st.text_input("Email del cliente")
-            telefono_cliente = st.text_input("Teléfono del cliente")
+    with st.expander("Datos del cliente"):
+        nombre_cliente = st.text_input("Nombre del cliente")
+        email_cliente = st.text_input("Email del cliente")
+        telefono_cliente = st.text_input("Teléfono del cliente")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1428,8 +1445,7 @@ bytes_informe = html_informe.encode("utf-8")
 
 # -------- COLUMNA 2: DESCARGAR INFORME --------
 with col_desc:
-    st.markdown('<div class="srg-title">Descargar informe</div>', unsafe_allow_html=True)
-    st.markdown('<div class="srg-box">', unsafe_allow_html=True)
+    st.markdown('<div class="srg-panel"><h4>Descargar informe</h4>', unsafe_allow_html=True)
 
     with st.expander("Resumen del informe"):
         st.write(f"**Pensión futura estimada:** {pension_futura:,.0f} €/mes")
@@ -1445,8 +1461,6 @@ with col_desc:
         st.write(f"**Email:** {email_cliente}")
         st.write(f"**Teléfono:** {telefono_cliente}")
 
-
-
     st.download_button(
         label="Descargar informe SRG (HTML imprimible)",
         data=bytes_informe,
@@ -1455,16 +1469,3 @@ with col_desc:
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-# ============================================
-#   FOOTER PROFESIONAL SRG
-# ============================================
-
-footer_html = """
-<div class="srg-footer">
-    <div><b>Simulador SRG — Samuel Ruiz González </b></div>
-    <div>Herramienta educativa y formativa para Agentes.</div>
-    <div>© 2025 Samuel Ruiz González · <a href="#">Política de privacidad</a> · <a href="#">Aviso legal</a></div>
-</div>
-"""
-st.markdown(footer_html, unsafe_allow_html=True)
