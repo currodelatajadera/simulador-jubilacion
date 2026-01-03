@@ -480,11 +480,13 @@ with colD:
     )
 
     brecha = objetivo_futuro - pension_futura if modo_brecha == "Objetivo económico" else gastos_futuros - pension_futura
+    brecha = max(0, brecha)
 
     st.metric("Brecha mensual a cubrir", f"{brecha:,.0f} €")
 
-    with st.expander("¿Qué es la brecha?"):
-        st.markdown("""
+    try:
+        with st.expander("¿Qué es la brecha?"):
+            st.markdown("""
 La **brecha** es la diferencia entre:
 
 - lo que necesitarás cada mes en jubilación (tu *objetivo económico* o tus *gastos reales*),  
@@ -495,6 +497,8 @@ En términos prácticos, la brecha representa **cuánto dinero faltaría cada me
 
 El plan de ahorro SRG se diseña precisamente para **cubrir esa brecha** de forma realista, sostenible y adaptada a tu situación personal.
 """)
+    except:
+        st.warning("No se ha podido mostrar la explicación de la brecha.")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
