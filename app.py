@@ -399,31 +399,44 @@ with st.expander("Ver explicación detallada"):
 
 colA, colB, colC, colD = st.columns(4)
 
+# -----------------------------
+#   COLUMNA A — PENSIÓN E INFLACIÓN
+# -----------------------------
 with colA:
     st.markdown('<div class="srg-title">Pensión e inflación</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
     base = st.number_input(
         "Base reguladora (€)",
-        0, 50000, 1500,
+        min_value=0,
+        max_value=50000,
+        value=1500,
         help="Promedio de tus bases de cotización. Determina tu pensión."
     )
 
     inflacion = st.number_input(
         "Inflación anual (%)",
-        0.0, 10.0, 2.0, 0.1,
+        min_value=0.0,
+        max_value=10.0,
+        value=2.0,
+        step=0.1,
         help="La inflación reduce el poder adquisitivo del dinero con el tiempo."
     )
 
     reval = st.number_input(
         "Revalorización anual pensión (%)",
-        0.0, 5.0, 1.5, 0.1,
+        min_value=0.0,
+        max_value=5.0,
+        value=1.5,
+        step=0.1,
         help="Incremento anual estimado de la pensión pública."
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Cálculo pensión
+# -----------------------------
+#   CÁLCULO PENSIÓN
+# -----------------------------
 if modo_valido:
     pct = min(1, anos_totales / 37)
 else:
@@ -432,6 +445,9 @@ else:
 pension_hoy = base * pct * coef_ajuste
 pension_futura = pension_hoy * ((1 + reval/100) ** anos_hasta_jub)
 
+# -----------------------------
+#   COLUMNA B — RESUMEN PENSIÓN
+# -----------------------------
 with colB:
     st.markdown('<div class="srg-title">Resumen pensión</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
@@ -442,6 +458,9 @@ with colB:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# -----------------------------
+#   COLUMNA C — OBJETIVO ECONÓMICO (BLINDADA PARA CLOUD)
+# -----------------------------
 with colC:
     st.markdown('<div class="srg-title">Objetivo económico</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
@@ -449,7 +468,7 @@ with colC:
     ingresos_deseados = st.number_input(
         "Ingresos deseados hoy (€)",
         min_value=0.0,
-        value=float(ingresos_deseados) if 'ingresos_deseados' in locals() else 2000.0,
+        value=2000.0,
         step=100.0
     )
 
@@ -459,8 +478,8 @@ with colC:
     )
 
     try:
-        objetivo_futuro = ingresos_deseados * ((1 + inflacion/100) ** anos_hasta_jub)
-        gastos_futuros = ingresos_deseados * gastos_pct/100 * ((1 + inflacion/100) ** anos_hasta_jub)
+        objetivo_futuro = float(ingresos_deseados) * ((1 + inflacion/100) ** anos_hasta_jub)
+        gastos_futuros = float(ingresos_deseados) * gastos_pct/100 * ((1 + inflacion/100) ** anos_hasta_jub)
     except:
         objetivo_futuro = 0.0
         gastos_futuros = 0.0
@@ -470,6 +489,9 @@ with colC:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# -----------------------------
+#   COLUMNA D — BRECHA (FUNCIONA EN CLOUD)
+# -----------------------------
 with colD:
     st.markdown('<div class="srg-title">Brecha</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
@@ -477,16 +499,25 @@ with colD:
     modo_brecha = st.radio(
         "¿Qué quieres cubrir?",
         ["Objetivo económico", "Gastos reales"],
-        horizontal=True,
-        help="Selecciona si quieres cubrir tu objetivo de ingresos o tus gastos reales futuros."
+        horizontal=True
     )
 
-    brecha = objetivo_futuro - pension_futura if modo_brecha == "Objetivo económico" else gastos_futuros - pension_futura
-    brecha = max(0, brecha)
+    try:
+        if modo_brecha == "Objetivo económico":
+            brecha = objetivo_futuro - pension_futura
+        else:
+            brecha = gastos_futuros - pension_futura
+        brecha = max(0, float(brecha))
+    except:
+        brecha = 0.0
 
     st.metric("Brecha mensual a cubrir", f"{brecha:,.0f} €")
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+# -----------------------------
+#   EXPANDER — ¿QUÉ ES LA BRECHA?
+# -----------------------------
 with st.expander("¿Qué es la brecha?"):
     st.markdown("""
 La **brecha** es la diferencia entre:
