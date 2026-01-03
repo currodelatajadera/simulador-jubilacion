@@ -446,27 +446,29 @@ with colC:
     st.markdown('<div class="srg-title">Objetivo económico</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-    objetivo_hoy = st.number_input(
+    ingresos_deseados = st.number_input(
         "Ingresos deseados hoy (€)",
-        0, 20000, 2000,
-        help="Ingresos mensuales que te gustaría mantener en jubilación."
+        min_value=0.0,
+        value=float(ingresos_deseados) if 'ingresos_deseados' in locals() else 2000.0,
+        step=100.0
     )
 
-    pct_mantener = st.number_input(
+    gastos_pct = st.slider(
         "Gastos que mantendrás en jubilación (%)",
-        50, 120, 90,
-        help="Porcentaje de tus gastos actuales que mantendrás en jubilación."
+        50, 100, 90
     )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    try:
+        objetivo_futuro = ingresos_deseados * ((1 + inflacion/100) ** anos_hasta_jub)
+        gastos_futuros = ingresos_deseados * gastos_pct/100 * ((1 + inflacion/100) ** anos_hasta_jub)
+    except:
+        objetivo_futuro = 0.0
+        gastos_futuros = 0.0
 
-objetivo_futuro, gastos_futuros = calcular_objetivo_y_gastos_futuros(
-    objetivo_hoy, gastos, pct_mantener, inflacion, anos_hasta_jub
-)
-
-with colC:
     st.metric("Objetivo mensual futuro", f"{objetivo_futuro:,.0f} €")
     st.metric("Gastos futuros estimados", f"{gastos_futuros:,.0f} €")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with colD:
     st.markdown('<div class="srg-title">Brecha</div>', unsafe_allow_html=True)
