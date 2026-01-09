@@ -218,101 +218,126 @@ def tabla_mensual_y_anual_html(evolucion, anos_hasta_jub):
             """
     return filas
 
-# ============================
-#   FILA 1 — DATOS PRINCIPALES
-# ============================
+# ============================================
+#   FILA 1 — DATOS PRINCIPALES (BLINDADO)
+# ============================================
 
 col1, col2, col3, col4 = st.columns(4)
 
+# -------------------------
+#   COLUMNA 1 — EDADES
+# -------------------------
 with col1:
     st.markdown('<div class="srg-title">Datos personales</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
     edad_actual = st.number_input(
         "Edad actual",
-        18, 70, 40,
-        help="Tu edad hoy. Se usa para calcular los años que faltan hasta la jubilación."
+        min_value=18,
+        max_value=70,
+        value=40
     )
 
     edad_prevista_jub = st.number_input(
         "Edad prevista de jubilación",
-        60, 75, 67,
-        help="La edad a la que deseas jubilarte. Afecta a la pensión y al tiempo de ahorro."
+        min_value=edad_actual + 1,
+        max_value=75,
+        value=max(67, edad_actual + 1)
     )
 
     esperanza_vida = st.number_input(
         "Esperanza de vida",
-        75, 100, 85,
-        help="Años que se estima que vivirás. Se usa para calcular cuántos años necesitarás ingresos en jubilación."
+        min_value=edad_prevista_jub + 1,
+        max_value=100,
+        value=max(85, edad_prevista_jub + 1)
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Ajustes de coherencia en edades
-if edad_actual >= edad_prevista_jub:
-    st.warning("La edad prevista de jubilación debe ser mayor que la edad actual. Se ajusta automáticamente.")
-    edad_prevista_jub = edad_actual + 1
-
-if esperanza_vida <= edad_prevista_jub:
-    st.warning("La esperanza de vida debe ser mayor que la edad de jubilación. Se ajusta automáticamente.")
-    esperanza_vida = edad_prevista_jub + 1
-
+# -------------------------
+#   COLUMNA 2 — COTIZACIÓN
+# -------------------------
 with col2:
     st.markdown('<div class="srg-title">Cotización</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
+    max_cotizados = max(0, edad_actual - 16)
+
     anos_cotizados_hoy = st.number_input(
         "Años cotizados hoy",
-        0, max(1, edad_actual - 16), 10,
-        help="Años que ya has cotizado a la Seguridad Social."
+        min_value=0,
+        max_value=max_cotizados,
+        value=min(10, max_cotizados)
     )
+
+    max_futuros = max(0, edad_prevista_jub - edad_actual)
 
     anos_futuros = st.number_input(
         "Años que cotizarás desde hoy",
-        0, max(1, edad_prevista_jub - edad_actual), 0,
-        help="Años que te quedan por cotizar hasta la jubilación."
+        min_value=0,
+        max_value=max_futuros,
+        value=0
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# -------------------------
+#   COLUMNA 3 — TIPO JUBILACIÓN
+# -------------------------
 with col3:
     st.markdown('<div class="srg-title">Tipo de jubilación</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
     tipo_jubilacion = st.selectbox(
         "Tipo prevista",
-        ["Ordinaria", "Anticipada voluntaria", "Anticipada involuntaria", "Demorada"],
-        help="La modalidad determina penalizaciones o bonificaciones en la pensión."
+        ["Ordinaria", "Anticipada voluntaria", "Anticipada involuntaria", "Demorada"]
     )
+
+    # Rango dinámico según modalidad
+    if tipo_jubilacion == "Ordinaria":
+        min_mes, max_mes = 0, 0
+    elif tipo_jubilacion == "Demorada":
+        min_mes, max_mes = -120, -1
+    elif tipo_jubilacion == "Anticipada voluntaria":
+        min_mes, max_mes = 1, 24
+    elif tipo_jubilacion == "Anticipada involuntaria":
+        min_mes, max_mes = 1, 48
 
     meses_anticipo = st.number_input(
         "Meses anticipo (+) / demora (-)",
-        -120, 60, 0,
-        help="Meses que adelantas o retrasas tu jubilación. Afecta al coeficiente de ajuste."
+        min_value=min_mes,
+        max_value=max_mes,
+        value=min_mes
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# -------------------------
+#   COLUMNA 4 — INGRESOS Y GASTOS
+# -------------------------
 with col4:
     st.markdown('<div class="srg-title">Ingresos y gastos</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
     ingresos = st.number_input(
         "Ingresos mensuales (€)",
-        0, 20000, 2500,
-        help="Tus ingresos actuales. Se usan para calcular tu capacidad de ahorro."
+        min_value=0,
+        max_value=20000,
+        value=2500
     )
 
     gastos = st.number_input(
         "Gastos mensuales (€)",
-        0, 20000, 1800,
-        help="Tus gastos actuales. Se usan para calcular tu capacidad de ahorro."
+        min_value=0,
+        max_value=ingresos,
+        value=min(1800, ingresos)
     )
 
     capacidad = ingresos - gastos
     st.metric("Capacidad de ahorro", f"{capacidad:,.0f} €")
 
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ============================
 #   CÁLCULOS LEGALES
