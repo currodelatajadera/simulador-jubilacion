@@ -219,7 +219,7 @@ def tabla_mensual_y_anual_html(evolucion, anos_hasta_jub):
     return filas
 
 # ============================================
-#   FILA 1 — DATOS PRINCIPALES (BLINDADO)
+#   FILA 1 — DATOS PRINCIPALES (REACTIVO)
 # ============================================
 
 col1, col2, col3, col4 = st.columns(4)
@@ -231,28 +231,18 @@ with col1:
     st.markdown('<div class="srg-title">Datos personales</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-    edad_actual = st.number_input(
-        "Edad actual",
-        min_value=18,
-        max_value=70,
-        value=40
-    )
-
-    edad_prevista_jub = st.number_input(
-        "Edad prevista de jubilación",
-        min_value=edad_actual + 1,
-        max_value=75,
-        value=max(67, edad_actual + 1)
-    )
-
-    esperanza_vida = st.number_input(
-        "Esperanza de vida",
-        min_value=edad_prevista_jub + 1,
-        max_value=100,
-        value=max(85, edad_prevista_jub + 1)
-    )
+    edad_actual = st.number_input("Edad actual", 18, 70, 40)
+    edad_prevista_jub = st.number_input("Edad prevista de jubilación", 60, 75, 67)
+    esperanza_vida = st.number_input("Esperanza de vida", 75, 100, 85)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+# Correcciones reactivas
+if edad_prevista_jub <= edad_actual:
+    edad_prevista_jub = edad_actual + 1
+
+if esperanza_vida <= edad_prevista_jub:
+    esperanza_vida = edad_prevista_jub + 1
 
 # -------------------------
 #   COLUMNA 2 — COTIZACIÓN
@@ -261,25 +251,17 @@ with col2:
     st.markdown('<div class="srg-title">Cotización</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-    max_cotizados = max(0, edad_actual - 16)
-
-    anos_cotizados_hoy = st.number_input(
-        "Años cotizados hoy",
-        min_value=0,
-        max_value=max_cotizados,
-        value=min(10, max_cotizados)
-    )
-
-    max_futuros = max(0, edad_prevista_jub - edad_actual)
-
-    anos_futuros = st.number_input(
-        "Años que cotizarás desde hoy",
-        min_value=0,
-        max_value=max_futuros,
-        value=0
-    )
+    anos_cotizados_hoy = st.number_input("Años cotizados hoy", 0, 50, 10)
+    anos_futuros = st.number_input("Años que cotizarás desde hoy", 0, 50, 0)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+# Corrección reactiva
+if anos_cotizados_hoy > edad_actual - 16:
+    anos_cotizados_hoy = max(0, edad_actual - 16)
+
+if anos_futuros > edad_prevista_jub - edad_actual:
+    anos_futuros = max(0, edad_prevista_jub - edad_actual)
 
 # -------------------------
 #   COLUMNA 3 — TIPO JUBILACIÓN
@@ -293,22 +275,7 @@ with col3:
         ["Ordinaria", "Anticipada voluntaria", "Anticipada involuntaria", "Demorada"]
     )
 
-    # Rango dinámico según modalidad
-    if tipo_jubilacion == "Ordinaria":
-        min_mes, max_mes = 0, 0
-    elif tipo_jubilacion == "Demorada":
-        min_mes, max_mes = -120, -1
-    elif tipo_jubilacion == "Anticipada voluntaria":
-        min_mes, max_mes = 1, 24
-    elif tipo_jubilacion == "Anticipada involuntaria":
-        min_mes, max_mes = 1, 48
-
-    meses_anticipo = st.number_input(
-        "Meses anticipo (+) / demora (-)",
-        min_value=min_mes,
-        max_value=max_mes,
-        value=min_mes
-    )
+    meses_anticipo = st.number_input("Meses anticipo (+) / demora (-)", -120, 60, 0)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -319,25 +286,13 @@ with col4:
     st.markdown('<div class="srg-title">Ingresos y gastos</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-    ingresos = st.number_input(
-        "Ingresos mensuales (€)",
-        min_value=0,
-        max_value=20000,
-        value=2500
-    )
-
-    gastos = st.number_input(
-        "Gastos mensuales (€)",
-        min_value=0,
-        max_value=ingresos,
-        value=min(1800, ingresos)
-    )
+    ingresos = st.number_input("Ingresos mensuales (€)", 0, 20000, 2500)
+    gastos = st.number_input("Gastos mensuales (€)", 0, ingresos, 1800)
 
     capacidad = ingresos - gastos
     st.metric("Capacidad de ahorro", f"{capacidad:,.0f} €")
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 # ============================
 #   CÁLCULOS LEGALES
@@ -407,75 +362,96 @@ with st.expander("Ver explicación detallada"):
 
 colA, colB, colC, colD = st.columns(4)
 
+# -------- COLUMNA A: PENSIÓN E INFLACIÓN --------
 with colA:
     st.markdown('<div class="srg-title">Pensión e inflación</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
     base = st.number_input(
         "Base reguladora (€)",
-        0, 50000, 1500,
+        min_value=0,
+        max_value=50000,
+        value=1500,
         help="Promedio de tus bases de cotización. Determina tu pensión."
     )
 
     inflacion = st.number_input(
         "Inflación anual (%)",
-        0.0, 10.0, 2.0, 0.1,
+        min_value=0.0,
+        max_value=10.0,
+        value=2.0,
+        step=0.1,
         help="La inflación reduce el poder adquisitivo del dinero con el tiempo."
     )
 
     reval = st.number_input(
         "Revalorización anual pensión (%)",
-        0.0, 5.0, 1.5, 0.1,
+        min_value=0.0,
+        max_value=5.0,
+        value=1.5,
+        step=0.1,
         help="Incremento anual estimado de la pensión pública."
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Cálculo pensión
+# -------- CÁLCULO PENSIÓN --------
 if modo_valido:
-    pct = min(1, anos_totales / 37)
+    pct = min(1.0, anos_totales / 37)
 else:
-    pct = 0
+    pct = 0.0
 
 pension_hoy = base * pct * coef_ajuste
 pension_futura = pension_hoy * ((1 + reval/100) ** anos_hasta_jub)
 
+# -------- COLUMNA B: RESUMEN PENSIÓN --------
 with colB:
     st.markdown('<div class="srg-title">Resumen pensión</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
-    st.write(f"**Porcentaje sobre base:** {pct*100:,.1f} %")
-    st.write(f"**Pensión ajustada hoy:** {pension_hoy:,.0f} €")
-    st.write(f"**Pensión futura estimada:** {pension_futura:,.0f} €/mes")
+    st.metric("Porcentaje sobre base", f"{pct*100:,.1f} %")
+    st.metric("Pensión ajustada hoy", f"{pension_hoy:,.0f} €")
+    st.metric("Pensión futura estimada", f"{pension_futura:,.0f} €/mes")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# -------- COLUMNA C: OBJETIVO ECONÓMICO --------
 with colC:
     st.markdown('<div class="srg-title">Objetivo económico</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
 
     objetivo_hoy = st.number_input(
         "Ingresos deseados hoy (€)",
-        0, 20000, 2000,
+        min_value=0,
+        max_value=20000,
+        value=2000,
         help="Ingresos mensuales que te gustaría mantener en jubilación."
     )
 
     pct_mantener = st.number_input(
         "Gastos que mantendrás en jubilación (%)",
-        50, 120, 90,
+        min_value=50,
+        max_value=120,
+        value=90,
         help="Porcentaje de tus gastos actuales que mantendrás en jubilación."
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# Cálculo objetivo y gastos futuros
 objetivo_futuro, gastos_futuros = calcular_objetivo_y_gastos_futuros(
-    objetivo_hoy, gastos, pct_mantener, inflacion, anos_hasta_jub
+    objetivo_hoy,
+    gastos,
+    pct_mantener,
+    inflacion,
+    anos_hasta_jub
 )
 
 with colC:
     st.metric("Objetivo mensual futuro", f"{objetivo_futuro:,.0f} €")
     st.metric("Gastos futuros estimados", f"{gastos_futuros:,.0f} €")
 
+# -------- COLUMNA D: BRECHA --------
 with colD:
     st.markdown('<div class="srg-title">Brecha</div>', unsafe_allow_html=True)
     st.markdown('<div class="srg-box">', unsafe_allow_html=True)
@@ -487,7 +463,10 @@ with colD:
         help="Selecciona si quieres cubrir tu objetivo de ingresos o tus gastos reales futuros."
     )
 
-    brecha = objetivo_futuro - pension_futura if modo_brecha == "Objetivo económico" else gastos_futuros - pension_futura
+    if modo_brecha == "Objetivo económico":
+        brecha = objetivo_futuro - pension_futura
+    else:
+        brecha = gastos_futuros - pension_futura
 
     st.metric("Brecha mensual a cubrir", f"{brecha:,.0f} €")
 
