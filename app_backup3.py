@@ -20,201 +20,53 @@ if "mostrar_explicacion" not in st.session_state:
     st.session_state.mostrar_explicacion = False
 
 # ============================================
-#   CSS GLOBAL PREMIUM SRG (HEADER + TÍTULOS)
+#   CSS GLOBAL PREMIUM SRG
 # ============================================
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');
 
-/* ============================================================
-   BLOQUE ANTI-FLASH — Fondo oscuro desde el primer frame
-   ============================================================ */
+/* Fondo oscuro global */
 html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     background-color: #05070D !important;
-    background-image: none !important;
-    transition: none !important;
     color: #EAF2FF !important;
 }
 
-/* ============================================================
-   TOOLTIP SRG FINAL — Fondo oscuro y texto visible
-   ============================================================ */
-[data-testid="stTooltipHoverTarget"] div,
-[data-testid="stTooltipHoverTarget"]:hover div {
+/* Tooltips oscuros */
+[data-testid="stTooltipHoverTarget"] div {
     background-color: #0A1A2F !important;
     color: #EAF2FF !important;
     border: 1px solid #00BFFF !important;
     box-shadow: 0 0 12px rgba(0,191,255,0.4);
     padding: 6px 10px !important;
     border-radius: 6px !important;
-    transition: background-color 0.3s ease-in-out;
-}
-[data-testid="stTooltipHoverTarget"] * {
-    color: #EAF2FF !important;
-    background-color: transparent !important;
-    opacity: 1 !important;
-}
-[data-testid="stTooltipHoverTarget"] p,
-[data-testid="stTooltipHoverTarget"] span,
-[data-testid="stTooltipHoverTarget"] li {
-    color: #EAF2FF !important;
-    font-size: 0.9rem !important;
-    line-height: 1.4 !important;
 }
 
-/* ============================================================
-   TOOLTIP SRG UNIVERSAL — Hover personalizado
-   ============================================================ */
-.srg-tooltip {
-    position: relative;
-    display: inline-block;
-    cursor: help;
-    color: #00BFFF;
-    font-weight: 500;
-}
-.srg-tooltip .srg-tooltip-text {
-    visibility: hidden;
-    width: 260px;
-    background-color: #0A0F1F;
-    color: #EAF2FF;
-    text-align: left;
-    border-radius: 6px;
-    padding: 10px;
-    border: 1px solid #00BFFF;
-    box-shadow: 0 0 10px rgba(0,191,255,0.4);
-    position: absolute;
-    z-index: 999;
-    top: 24px;
-    left: 0;
-    font-size: 0.85rem;
-}
-.srg-tooltip:hover .srg-tooltip-text {
-    visibility: visible;
-}
-
-/* ============================================================
-   HEADER SRG
-   ============================================================ */
-.srg-header {
-    padding: 14px 24px;
-    margin-bottom: 18px;
-    background: linear-gradient(135deg, #003366, #0055A4);
-    border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-}
-.srg-header-inner {
-    max-width: 980px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    text-align: center;
-}
-.srg-header-title-main {
-    font-family: 'Dancing Script', cursive !important;
-    font-size: 3.2rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-    line-height: 1.1;
-}
-.srg-header-title-sub {
-    font-family: 'Dancing Script', cursive !important;
-    font-size: 1.8rem;
-    font-weight: 400;
-    color: #d0d8e8;
-    margin-top: 6px;
-}
-
-/* ============================================================
-   TITULOS Y BLOQUES
-   ============================================================ */
-.srg-title {
-    background: linear-gradient(135deg, #003366, #0055A4);
-    color: white !important;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-
-/* ============================================================
-   SELECTBOX Y RADIO SRG OSCUROS
-   ============================================================ */
-div[data-baseweb="select"] > div {
-    background-color: #0A0F1F !important;
-    color: #EAF2FF !important;
-    border: 1px solid #00BFFF !important;
-    border-radius: 6px !important;
-    box-shadow: 0 0 6px rgba(0,191,255,0.3) !important;
-}
-div[data-baseweb="select"] span {
-    color: #EAF2FF !important;
-}
-div[data-baseweb="select"] svg {
+/* Icono tooltip */
+[data-testid="stTooltipIcon"] svg {
     fill: #00BFFF !important;
-}
-div[data-baseweb="radio"] {
-    background-color: #0A0F1F !important;
-    border: 1px solid #00BFFF !important;
-    border-radius: 6px !important;
-    padding: 6px 10px !important;
-    box-shadow: 0 0 6px rgba(0,191,255,0.3) !important;
-}
-div[data-baseweb="radio"] label {
-    color: #EAF2FF !important;
-    font-size: 0.9rem !important;
-}
-div[data-baseweb="radio"] svg {
-    fill: #00BFFF !important;
+    filter: drop-shadow(0 0 6px rgba(0,191,255,0.6));
 }
 
-/* ============================================================
-   FOOTER SRG
-   ============================================================ */
-.srg-footer {
-    margin-top: 30px;
-    padding: 16px 12px;
-    background: linear-gradient(135deg, #003366, #0055A4);
-    color: #ffffff;
-    text-align: center;
-    font-size: 0.85rem;
-    border-radius: 6px 6px 0 0;
-}
-.srg-footer a {
-    color: #ffffff;
-    text-decoration: underline;
-}
-
-/* ============================================================
-   CORRECCIÓN FINAL — NÚMEROS + INPUTS + TOOLTIP ICON
-   ============================================================ */
-
-/* NÚMEROS AZUL FUTURISTA */
-input[type="number"] {
-    color: #00BFFF !important;
-    font-weight: 600 !important;
-}
-
-/* INPUTS OSCUROS */
+/* Inputs oscuros */
 input[type="number"], input[type="text"], select, textarea {
     background-color: #0C1426 !important;
     border: 1px solid #00BFFF !important;
     color: #EAF2FF !important;
 }
 
-/* ICONO DEL TOOLTIP */
-[data-testid="stTooltipIcon"] svg {
-    fill: #00BFFF !important;
-    filter: drop-shadow(0 0 6px rgba(0,191,255,0.6));
+/* Números azul futurista */
+input[type="number"] {
+    color: #00BFFF !important;
+    font-weight: 600 !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================
-#   SCRIPT — FIX TOOLTIP STREAMLIT
+# SCRIPT FIX TOOLTIP STREAMLIT
 # ============================================
 
 tooltip_fix = """
@@ -233,7 +85,6 @@ observer.observe(document.body, { childList: true, subtree: true });
 </script>
 """
 st.markdown(tooltip_fix, unsafe_allow_html=True)
-
 
 # ============================================
 # BLOQUE 2 — INTERFAZ PRINCIPAL (PARTE 1)
