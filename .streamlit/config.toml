@@ -1,0 +1,13 @@
+[theme]
+base="dark"
+primaryColor="#00BFFF"
+backgroundColor="#05070D"
+secondaryBackgroundColor="#0A1A2F"
+textColor="#EAF2FF"
+font="sans serif"
+<<<<<<< HEAD
+
+=======
+Corregir claves del tema SRG para compatibilidad con Streamlit
+>>>>>>> origin/main
+

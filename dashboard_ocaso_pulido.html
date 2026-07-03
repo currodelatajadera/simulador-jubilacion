@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard OCASO — Comparativa neta</title>
+<style>
+  :root{--bg:#f6f7fb;--panel:#fff;--accent:#0b5ed7;--muted:#6b7280;--yellow:#fff3bf;--card-shadow:0 6px 18px rgba(15,23,42,0.08);}
+  body{font-family:Inter,Segoe UI,Arial;margin:0;background:var(--bg);color:#0f172a;}
+  .container{max-width:1100px;margin:24px auto;padding:18px;}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  header h1{font-size:20px;margin:0;}
+  .grid{display:grid;grid-template-columns:420px 1fr;gap:16px;}
+  .panel{background:var(--panel);padding:14px;border-radius:10px;box-shadow:var(--card-shadow);}
+  label{display:block;font-size:13px;color:var(--muted);margin-top:10px;}
+  input[type="number"], input[type="text"], select{width:100%;padding:8px;border-radius:6px;border:1px solid #e6e9ef;background:var(--yellow);}
+  .row{display:flex;gap:8px;}
+  .small{width:120px;}
+  .metric{background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #eef2ff;margin-bottom:8px;}
+  .metrics{display:flex;flex-wrap:wrap;gap:10px;}
+  .metric h3{margin:0;font-size:13px;color:var(--muted);}
+  .metric p{margin:6px 0 0;font-size:18px;font-weight:600;}
+  .bars{display:flex;gap:12px;align-items:end;height:160px;padding:12px;}
+  .bar{flex:1;border-radius:6px;display:flex;align-items:flex-end;justify-content:center;padding:6px;color:#0b1220;font-weight:700;}
+  .bar.ocaso{background:linear-gradient(180deg,#dbeafe,#bfdbfe);}
+  .bar.ss{background:linear-gradient(180deg,#fef3c7,#fde68a);}
+  .summary{margin-top:12px;padding:10px;background:#f8fafc;border-radius:8px;border:1px solid #eef2ff;}
+  .scenarios{display:flex;gap:8px;margin-top:10px;}
+  button{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;}
+  button.secondary{background:#6b7280;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}
+  th,td{padding:6px;border-bottom:1px solid #eef2ff;text-align:left;}
+  .note{font-size:13px;color:var(--muted);margin-top:8px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}.small{width:100%}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#0b5ed7,#7dd3fc);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">OC</div>
+    <div>
+      <h1>Comparativa Invalidez Temporal — OCASO vs Seguridad Social (neto)</h1>
+      <div style="color:var(--muted);font-size:13px">Se muestran ingresos brutos y netos; los netos descuentan la cuota de autónomo y la prima del seguro.</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Entradas -->
+    <div class="panel">
+      <h2 style="margin:0 0 8px 0;font-size:15px">Entradas (casillas amarillas)</h2>
+
+      <label>Rendimiento neto mensual (€)</label>
+      <input id="rendimiento" type="number" value="600" min="0" step="0.01" />
+
+      <label>Base cotización seleccionada (automática)</label>
+      <input id="base_sel" type="text" value="653.59" readonly style="background:#eef2ff"/>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Tipo cotización total (%)</label>
+          <input id="tipoCot" type="number" value="31.48" step="0.01" />
+        </div>
+        <div style="width:120px">
+          <label>Incluir MEI</label>
+          <select id="incluirMEI" style="background:var(--yellow)">
+            <option value="true">Sí</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+
+      <label>MEI %</label>
+      <input id="meiPct" type="number" value="0.90" step="0.01" />
+
+      <label>Días de baja (manual o usar baremo)</label>
+      <input id="diasBaja" type="number" value="16" min="0" max="365" />
+
+      <hr style="margin:12px 0"/>
+
+      <h3 style="margin:0 0 8px 0;font-size:14px">OCASO — diaria y baremo</h3>
+
+      <label>Diaria deseada por el cliente (€) — máximo 60 €</label>
+      <input id="diariaDeseada" type="number" value="" min="0" max="60" step="0.01" placeholder="Dejar vacío para calcular desde capital o manual" />
+
+      <label>Calcular diaria desde capital (0,50€/1000, tope 60€)</label>
+      <select id="calcDesdeCapital" style="background:var(--yellow)">
+        <option value="false">No</option>
+        <option value="true">Sí</option>
+      </select>
+
+      <label>Diaria OCASO manual (si no usa capital ni diaria deseada)</label>
+      <input id="ocasoDiariaManual" type="number" value="25" step="0.01" />
+
+      <label>Capital asegurado (Fallecimiento + Invalidez permanente) €</label>
+      <input id="capital" type="number" value="40000" min="0" step="100" />
+
+      <label>Selecciona lesión/enfermedad del baremo (rellena días automáticamente)</label>
+      <select id="baremoSelect" style="background:var(--yellow)">
+        <option value="">-- Usar días manuales --</option>
+        <option value="contusion|7">Contusión leve — 7 días</option>
+        <option value="esguince|14">Esguince moderado — 14 días</option>
+        <option value="fractura_tibia|90">Fractura tibia — 90 días</option>
+        <option value="fractura_femur|120">Fractura fémur — 120 días</option>
+        <option value="intervencion_quirurgica|45">Intervención quirúrgica — 45 días</option>
+        <option value="hospitalizacion|30">Hospitalización (media) — 30 días</option>
+        <option value="lesion_grave|180">Lesión grave — 180 días</option>
+        <option value="enfermedad_larga|120">Enfermedad larga — 120 días</option>
+      </select>
+
+      <label>Nivel / Oficio (I–V)</label>
+      <select id="nivel" style="background:var(--yellow)">
+        <option value="1">Nivel I</option>
+        <option value="2">Nivel II</option>
+        <option value="3">Nivel III</option>
+        <option value="4">Nivel IV</option>
+        <option value="5">Nivel V</option>
+      </select>
+
+      <label>Edad del asegurado</label>
+      <input id="edad" type="number" value="40" min="18" max="100" />
+
+      <label>Franquicia OCASO (días)</label>
+      <select id="ocasoFranq" style="background:var(--yellow)">
+        <option value="0">0</option>
+        <option value="7" selected>7</option>
+        <option value="15">15</option>
+      </select>
+
+      <label>Coberturas complementarias (marcar si aplica)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+        <label><input id="covHospital" type="checkbox" /> Subsidio hospitalización</label>
+        <label><input id="covAsist" type="checkbox" /> Gastos asistencia sanitaria</label>
+        <label><input id="covCancer" type="checkbox" /> Indemnización cáncer</label>
+        <label><input id="covEnf" type="checkbox" /> Ampliación a enfermedad</label>
+      </div>
+
+      <label style="margin-top:10px">Coste mensual OCASO (si ya lo conoces, déjalo vacío para calcular desde tarifa)</label>
+      <input id="ocasoCosteManual" type="number" value="" placeholder="Ej: 13.71" />
+
+      <label>Meses a restar para cálculo neto (ej. 1)</label>
+      <input id="mesesComparacion" type="number" value="1" min="1" max="12" />
+
+      <div class="scenarios">
+        <button onclick="cargarEscenario('fractura')">Fractura leve</button>
+        <button onclick="cargarEscenario('hospital')">Hospitalización</button>
+        <button class="secondary" onclick="cargarEscenario('larga')">Baja larga</button>
+      </div>
+
+      <div class="note">* Si seleccionas una lesión del baremo, los días se rellenan automáticamente; puedes ajustar manualmente si procede. La diaria deseada no puede superar 60 €.</div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="panel">
+      <h2 style="margin:0 0 8px 0;font-size:15px">Resultados y comparativa</h2>
+
+      <div class="metrics">
+        <div class="metric"><h3>Cuota mensual (autónomo)</h3><p id="cuota">€0.00</p></div>
+        <div class="metric"><h3>Base diaria SS</h3><p id="baseDiaria">€0.00</p></div>
+        <div class="metric"><h3>Ingreso bruto SS</h3><p id="ssTotal">€0.00</p></div>
+        <div class="metric"><h3>Ingreso neto SS (tras coste autónomo)</h3><p id="ssNeto">€0.00</p></div>
+
+        <div class="metric"><h3>Diaria OCASO usada</h3><p id="ocasoDiaria">€0.00</p></div>
+        <div class="metric"><h3>Ingreso bruto OCASO</h3><p id="ocasoTotal">€0.00</p></div>
+        <div class="metric"><h3>Ingreso neto OCASO (tras prima)</h3><p id="ocasoNeto">€0.00</p></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <h3 style="margin:6px 0 8px 0;font-size:14px">Gráfico comparativo (netos)</h3>
+        <div class="bars" id="chartBars"></div>
+      </div>
+
+      <div class="summary" id="summaryText"><strong>Resumen:</strong> Aquí aparecerá la frase lista para leer al cliente.</div>
+
+      <div style="margin-top:12px;">
+        <h3 style="margin:6px 0 8px 0;font-size:14px">Tarifa OCASO (tabla simplificada)</h3>
+        <div style="font-size:13px;color:var(--muted)">La tabla se usa para calcular la prima mensual según nivel, edad y franquicia. Si hay coberturas adicionales, la prima puede variar y el agente debe introducir la prima final si procede.</div>
+        <table id="tarifaTable">
+          <thead><tr><th>Nivel</th><th>Edad</th><th>Franq 7</th><th>Franq 15</th></tr></thead>
+          <tbody>
+            <tr data-nivel="1"><td>I</td><td>18-45</td><td>6.58</td><td>4.91</td></tr>
+            <tr data-nivel="1"><td>I</td><td>46-54</td><td>10.85</td><td>8.10</td></tr>
+            <tr data-nivel="1"><td>I</td><td>55-65</td><td>15.13</td><td>11.30</td></tr>
+            <tr data-nivel="2"><td>II</td><td>18-45</td><td>7.41</td><td>5.74</td></tr>
+            <tr data-nivel="2"><td>II</td><td>46-54</td><td>11.80</td><td>9.20</td></tr>
+            <tr data-nivel="2"><td>II</td><td>55-65</td><td>16.19</td><td>12.67</td></tr>
+            <tr data-nivel="3"><td>III</td><td>18-45</td><td>8.79</td><td>6.78</td></tr>
+            <tr data-nivel="3"><td>III</td><td>46-54</td><td>13.60</td><td>10.60</td></tr>
+            <tr data-nivel="3"><td>III</td><td>55-65</td><td>18.42</td><td>14.43</td></tr>
+            <tr data-nivel="4"><td>IV</td><td>18-45</td><td>11.32</td><td>8.57</td></tr>
+            <tr data-nivel="4"><td>IV</td><td>46-54</td><td>17.35</td><td>13.25</td></tr>
+            <tr data-nivel="4"><td>IV</td><td>55-65</td><td>23.38</td><td>17.93</td></tr>
+            <tr data-nivel="5"><td>V</td><td>18-45</td><td>14.09</td><td>10.75</td></tr>
+            <tr data-nivel="5"><td>V</td><td>46-54</td><td>21.60</td><td>16.60</td></tr>
+            <tr data-nivel="5"><td>V</td><td>55-65</td><td>29.12</td><td>22.45</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer style="margin-top:12px;color:var(--muted);font-size:13px">
+        Nota: la prima final puede requerir sobreprima por motocicletas, deportes de riesgo o agravaciones. Si existe duda, introduce la prima final en "Coste mensual OCASO".
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Utilidades */
+function formatMoney(v){ return '€' + Number(v).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function getBaseFromRend(rend){
+  rend = Number(rend);
+  if (rend <= 670) return 653.59;
+  if (rend <= 900) return 718.95;
+  if (rend <= 1166.7) return 849.67;
+  return 950.98;
+}
+function getTarifaCoste(nivel, edad, franq){
+  const rows = document.querySelectorAll('#tarifaTable tbody tr[data-nivel="'+nivel+'"]');
+  let ageGroup = '18-45';
+  if (edad >= 55) ageGroup = '55-65';
+  else if (edad >= 46) ageGroup = '46-54';
+  for (let r of rows){
+    if (r.cells[1].textContent.trim() === ageGroup){
+      return Number(franq==7 ? r.cells[2].textContent : r.cells[3].textContent);
+    }
+  }
+  return Number(rows[0] ? rows[0].cells[2].textContent : 10);
+}
+
+/* Actualización principal */
+function updateAll(){
+  // Inputs
+  const rendimiento = Number(document.getElementById('rendimiento').value) || 0;
+  const tipoCot = Number(document.getElementById('tipoCot').value) || 0;
+  const incluirMEI = document.getElementById('incluirMEI').value === 'true';
+  const meiPct = Number(document.getElementById('meiPct').value) || 0;
+  let diasBaja = Math.max(0, Math.min(365, Number(document.getElementById('diasBaja').value) || 0));
+  const diariaDeseada = document.getElementById('diariaDeseada').value !== '' ? Number(document.getElementById('diariaDeseada').value) : null;
+  const calcDesdeCapital = document.getElementById('calcDesdeCapital').value === 'true';
+  const ocasoDiariaManual = Number(document.getElementById('ocasoDiariaManual').value) || 0;
+  const capital = Math.max(0, Number(document.getElementById('capital').value) || 0);
+  const baremoVal = document.getElementById('baremoSelect').value;
+  const nivel = Number(document.getElementById('nivel').value) || 1;
+  const edad = Number(document.getElementById('edad').value) || 40;
+  const ocasoFranq = Number(document.getElementById('ocasoFranq').value) || 7;
+  const covHospital = document.getElementById('covHospital').checked;
+  const covAsist = document.getElementById('covAsist').checked;
+  const covCancer = document.getElementById('covCancer').checked;
+  const covEnf = document.getElementById('covEnf').checked;
+  const ocasoCosteManual = document.getElementById('ocasoCosteManual').value;
+  const mesesComparacion = Math.max(1, Number(document.getElementById('mesesComparacion').value) || 1);
+
+  // Si se seleccionó baremo, rellenar días automáticamente
+  if (baremoVal){
+    const parts = baremoVal.split('|');
+    const diasFromBaremo = Number(parts[1]) || 0;
+    diasBaja = diasFromBaremo;
+    document.getElementById('diasBaja').value = diasFromBaremo;
+  }
+
+  // Base seleccionada
+  const baseSel = getBaseFromRend(rendimiento);
+  document.getElementById('base_sel').value = baseSel.toFixed(2);
+
+  // Tipo efectivo y cuota
+  const tipoEfectivo = tipoCot + (incluirMEI ? meiPct : 0);
+  const cuota = baseSel * tipoEfectivo / 100;
+
+  // Base diaria SS y prestaciones
+  const baseDiaria = baseSel / 30;
+  const ss_4_20 = baseDiaria * 0.60;
+  const ss_21p = baseDiaria * 0.75;
+  const dias_4_20 = Math.max(0, Math.min(17, diasBaja - 3));
+  const dias_21 = Math.max(0, diasBaja - 20);
+  const ssTotal = dias_4_20 * ss_4_20 + dias_21 * ss_21p;
+
+  // Diaria OCASO: prioridad
+  let ocasoDiariaCalc = 0;
+  let ocasoDiariaSource = '';
+  if (diariaDeseada !== null && !isNaN(diariaDeseada)){
+    ocasoDiariaCalc = Math.min(60, Math.max(0, diariaDeseada));
+    ocasoDiariaSource = `Diaria deseada por cliente: ${ocasoDiariaCalc.toFixed(2)} € (tope 60€)`;
+  } else if (calcDesdeCapital){
+    ocasoDiariaCalc = Math.min( (0.50/1000) * capital, 60 );
+    ocasoDiariaSource = `Calculada desde capital: 0.50€/1000 * ${capital} = ${ocasoDiariaCalc.toFixed(2)} € (tope 60€)`;
+  } else {
+    ocasoDiariaCalc = ocasoDiariaManual;
+    ocasoDiariaSource = `Introducida manualmente por el agente: ${ocasoDiariaManual.toFixed(2)} €`;
+  }
+
+  // Días indemnizables OCASO
+  const ocasoDias = Math.max(0, diasBaja - ocasoFranq);
+  const ocasoTotal = Math.min(ocasoDias * ocasoDiariaCalc, ocasoDiariaCalc * 365);
+
+  // Coste mensual OCASO: manual o desde tarifa
+  let ocasoCosteMensual = null;
+  if (ocasoCosteManual !== '') {
+    ocasoCosteMensual = Number(ocasoCosteManual);
+  } else {
+    ocasoCosteMensual = getTarifaCoste(nivel, edad, ocasoFranq);
+  }
+
+  // Si hay coberturas complementarias que afectan prima, avisar
+  let necesitaRevision = (covHospital || covAsist || covCancer || covEnf);
+
+  // Cálculo de netos:
+  // Para Seguridad Social: restamos el coste proporcional de la cuota según duración de la baja (meses equivalentes = diasBaja/30)
+  const mesesEquivalentes = diasBaja / 30;
+  const ssNeto = ssTotal - (cuota * mesesEquivalentes);
+
+  // Para OCASO: restamos la prima mensual multiplicada por los meses de comparación (input del agente)
+  const ocasoNeto = ocasoTotal - (ocasoCosteMensual * mesesComparacion);
+
+  // Diferencia neta (OCASO_net - SS_net)
+  const diferenciaNeta = ocasoNeto - ssNeto;
+
+  // Update UI
+  document.getElementById('cuota').textContent = formatMoney(cuota);
+  document.getElementById('baseDiaria').textContent = formatMoney(baseDiaria);
+  document.getElementById('ssTotal').textContent = formatMoney(ssTotal);
+  document.getElementById('ssNeto').textContent = formatMoney(ssNeto);
+  document.getElementById('ocasoDiaria').textContent = formatMoney(ocasoDiariaCalc);
+  document.getElementById('ocasoTotal').textContent = formatMoney(ocasoTotal);
+  document.getElementById('ocasoNeto').textContent = formatMoney(ocasoNeto);
+
+  // Bars (mostrar netos)
+  const maxVal = Math.max(Math.abs(ssNeto), Math.abs(ocasoNeto), 1);
+  const chart = document.getElementById('chartBars');
+  chart.innerHTML = '';
+  const labelSS = document.createElement('div'); labelSS.style.flex='1'; labelSS.style.textAlign='center';
+  const barSS = document.createElement('div'); barSS.className='bar ss'; barSS.style.height = (Math.max(0, ssNeto)/maxVal*100)+'%';
+  barSS.textContent = ssNeto!==0 ? formatMoney(ssNeto) : '€0.00';
+  labelSS.appendChild(barSS);
+  const labelOC = document.createElement('div'); labelOC.style.flex='1'; labelOC.style.textAlign='center';
+  const barOC = document.createElement('div'); barOC.className='bar ocaso'; barOC.style.height = (Math.max(0, ocasoNeto)/maxVal*100)+'%';
+  barOC.textContent = ocasoNeto!==0 ? formatMoney(ocasoNeto) : '€0.00';
+  labelOC.appendChild(barOC);
+  chart.appendChild(labelSS);
+  chart.appendChild(labelOC);
+
+  // Summary text
+  const summary = document.getElementById('summaryText');
+  let summaryText = `<strong>Con estos datos:</strong> Ingreso bruto SS: ${formatMoney(ssTotal)}; Ingreso neto SS (tras coste autónomo proporcional ${mesesEquivalentes.toFixed(2)} mes(es)): ${formatMoney(ssNeto)}. `;
+  summaryText += `Ingreso bruto OCASO: ${formatMoney(ocasoTotal)}; Ingreso neto OCASO (tras restar ${mesesComparacion} mes(es) de prima): ${formatMoney(ocasoNeto)}. `;
+  if (diferenciaNeta > 0) summaryText += `OCASO aporta ${formatMoney(diferenciaNeta)} netos adicionales respecto a la Seguridad Social. `;
+  else summaryText += `La Seguridad Social aporta ${formatMoney(-diferenciaNeta)} netos más que OCASO en este escenario. `;
+  summaryText += `Diaria OCASO usada: ${formatMoney(ocasoDiariaCalc)}. Prima mensual usada: ${formatMoney(ocasoCosteMensual)}.`;
+  if (necesitaRevision) summaryText += ` <em>Atención:</em> hay coberturas complementarias seleccionadas; la prima puede variar y puede requerir consulta de suscripción. Introduce la prima final si procede.`;
+  summary.innerHTML = summaryText;
+}
+
+/* Escenarios */
+function cargarEscenario(key){
+  if (key==='fractura'){ document.getElementById('baremoSelect').value = 'fractura_tibia|90'; document.getElementById('calcDesdeCapital').value='false'; document.getElementById('diariaDeseada').value='25'; }
+  else if (key==='hospital'){ document.getElementById('baremoSelect').value = 'hospitalizacion|30'; document.getElementById('calcDesdeCapital').value='false'; document.getElementById('diariaDeseada').value='40'; document.getElementById('covHospital').checked = true; }
+  else if (key==='larga'){ document.getElementById('baremoSelect').value = 'lesion_grave|180'; document.getElementById('calcDesdeCapital').value='false'; document.getElementById('diariaDeseada').value='50'; }
+  updateAll();
+}
+
+/* Listeners */
+['rendimiento','tipoCot','incluirMEI','meiPct','diasBaja','diariaDeseada','calcDesdeCapital','ocasoDiariaManual','capital','baremoSelect','nivel','edad','ocasoFranq','covHospital','covAsist','covCancer','covEnf','ocasoCosteManual','mesesComparacion'].forEach(id=>{
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', updateAll);
+  el.addEventListener('change', updateAll);
+});
+
+/* Init */
+updateAll();
+</script>
+</body>
+</html>
