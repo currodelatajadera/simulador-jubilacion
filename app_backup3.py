@@ -18,6 +18,41 @@ st.set_page_config(
 # Estado del botón de explicación
 if "mostrar_explicacion" not in st.session_state:
     st.session_state.mostrar_explicacion = False
+st.markdown("""
+<style>
+
+/* TOOLTIP: fondo oscuro y texto claro */
+[data-testid="stTooltipHoverTarget"] div {
+    background-color: #0A1A2F !important;
+    color: #EAF2FF !important;
+    border: 1px solid #00BFFF !important;
+    box-shadow: 0 0 12px rgba(0,191,255,0.4);
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+}
+
+/* ICONO DEL TOOLTIP: azul futurista */
+[data-testid="stTooltipIcon"] svg {
+    fill: #00BFFF !important;
+    filter: drop-shadow(0 0 6px rgba(0,191,255,0.6));
+}
+
+/* INPUTS: fondo oscuro */
+input[type="number"], input[type="text"], select, textarea {
+    background-color: #0C1426 !important;
+    border: 1px solid #00BFFF !important;
+    color: #EAF2FF !important;
+}
+
+/* NÚMEROS: azul futurista */
+input[type="number"] {
+    color: #00BFFF !important;
+    font-weight: 600 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 
 # ============================================
 #   CSS GLOBAL PREMIUM SRG (HEADER + TÍTULOS)
