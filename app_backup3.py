@@ -186,54 +186,36 @@ div[data-baseweb="radio"] svg {
     color: #ffffff;
     text-decoration: underline;
 }
-</style>
-""", unsafe_allow_html=True)
 
-# ============================================
-#   BLOQUE 2 — CORRECCIÓN VISUAL SRG FINAL
-# ============================================
+/* ============================================================
+   CORRECCIÓN FINAL — NÚMEROS + INPUTS + TOOLTIP ICON
+   ============================================================ */
 
-st.markdown("""
-<style>
-
-/* ======== NÚMEROS DE INPUTS ======== */
+/* NÚMEROS AZUL FUTURISTA */
 input[type="number"] {
     color: #00BFFF !important;
     font-weight: 600 !important;
 }
 
-/* ======== FONDO DE INPUTS ======== */
+/* INPUTS OSCUROS */
 input[type="number"], input[type="text"], select, textarea {
     background-color: #0C1426 !important;
     border: 1px solid #00BFFF !important;
     color: #EAF2FF !important;
 }
 
-/* ======== TOOLTIP ICONO ======== */
+/* ICONO DEL TOOLTIP */
 [data-testid="stTooltipIcon"] svg {
     fill: #00BFFF !important;
     filter: drop-shadow(0 0 6px rgba(0,191,255,0.6));
 }
 
-/* ======== TOOLTIP TEXTO ======== */
-[data-testid="stTooltipHoverTarget"] div {
-    background-color: #0A1A2F !important;
-    color: #EAF2FF !important;
-    border: 1px solid #00BFFF !important;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4);
-    font-size: 0.85rem !important;
-    padding: 6px 10px !important;
-    border-radius: 6px !important;
-}
-[data-testid="stTooltipHoverTarget"] p,
-[data-testid="stTooltipHoverTarget"] span {
-    color: #EAF2FF !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-import streamlit as st
+# ============================================
+#   SCRIPT — FIX TOOLTIP STREAMLIT
+# ============================================
 
 tooltip_fix = """
 <script>
@@ -252,116 +234,6 @@ observer.observe(document.body, { childList: true, subtree: true });
 """
 st.markdown(tooltip_fix, unsafe_allow_html=True)
 
-# ============================================
-#   HEADER SRG
-# ============================================
-
-header_html = """
-<div class="srg-header">
-  <div class="srg-header-inner">
-      <div>
-        <div class="srg-header-title-main">Simulador de Jubilación SRG</div>
-        <div class="srg-header-title-sub">Planificación de tu pensión de forma clara y profesional</div>
-      </div>
-  </div>
-</div>
-"""
-st.markdown(header_html, unsafe_allow_html=True)
-
-# ============================================
-#   FUNCIONES BASE
-# ============================================
-
-def calcular_objetivo_y_gastos_futuros(ingresos_hoy, gastos_hoy, pct, inflacion, anos):
-    factor = (1 + inflacion/100) ** anos
-    ingresos_fut = ingresos_hoy * factor
-    gastos_fut = gastos_hoy * (pct/100) * factor
-    return ingresos_fut, gastos_fut
-
-def calcular_evolucion_mensual(anos_hasta_jub, rentabilidad_anual_pct, inflacion_anual_pct, aportacion):
-    meses = int(max(0, anos_hasta_jub)) * 12
-    if meses < 1:
-        meses = 1
-
-    r_mensual = (1 + rentabilidad_anual_pct/100) ** (1/12) - 1
-    infl_mensual = (1 + inflacion_anual_pct/100) ** (1/12) - 1
-
-    capital = 0.0
-    lista = []
-
-    for mes in range(meses + 1):
-        if mes > 0:
-            capital = (capital + aportacion) * (1 + r_mensual)
-
-        capital_aportado = aportacion * mes
-        capital_real = capital / ((1 + infl_mensual) ** mes) if mes > 0 else 0.0
-        inflacion_perdida = capital - capital_real
-
-        lista.append({
-            "mes": mes,
-            "aportada": capital_aportado,
-            "total": capital,
-            "inflacion": inflacion_perdida,
-            "neta": capital_real
-        })
-
-    return lista
-
-def tabla_mensual_y_anual_html(evolucion, anos_hasta_jub):
-    if not evolucion or not isinstance(evolucion, list):
-        return "<tr><td colspan='5'>No hay datos de evolución.</td></tr>"
-
-    filas = []
-    max_mes = min(12, len(evolucion) - 1)
-    for mes in range(1, max_mes + 1):
-        fila = evolucion[mes]
-        aport = fila.get('aportada', 0.0)
-        tot = fila.get('total', 0.0)
-        infl = fila.get('inflacion', 0.0)
-        net = fila.get('neta', tot - infl)
-        filas.append(
-            f"<tr><td>{mes} (mes)</td><td>{aport:,.0f} €</td><td>{tot:,.0f} €</td><td>{infl:,.0f} €</td><td>{net:,.0f} €</td></tr>"
-        )
-
-    for ano in range(1, int(max(1, anos_hasta_jub)) + 1):
-        idx = ano * 12
-        if idx < len(evolucion):
-            fila = evolucion[idx]
-            aport = fila.get('aportada', 0.0)
-            tot = fila.get('total', 0.0)
-            infl = fila.get('inflacion', 0.0)
-            net = fila.get('neta', tot - infl)
-            filas.append(
-                f"<tr><td>{ano} (año)</td><td>{aport:,.0f} €</td><td>{tot:,.0f} €</td><td>{infl:,.0f} €</td><td>{net:,.0f} €</td></tr>"
-            )
-
-    return "\n".join(filas)
-
-def marca_agua_srg():
-    return """
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        opacity: 0.06;
-        z-index: 0;
-        background-image: repeating-linear-gradient(
-            -45deg,
-            transparent 0 80px,
-            #000000 80px 82px
-        );
-        color: #000;
-        font-size: 120px;
-        text-align: center;
-        line-height: 200px;
-        transform: rotate(-30deg);
-    ">
-        SRG SRG SRG SRG SRG SRG SRG
-    </div>
-    """
 
 # ============================================
 # BLOQUE 2 — INTERFAZ PRINCIPAL (PARTE 1)
