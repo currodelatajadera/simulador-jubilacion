@@ -17,6 +17,30 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+/* ======== NÚMEROS AZUL FUTURISTA (Cloud + Local) ======== */
+input[type="number"] {
+    color: #00BFFF !important;           /* azul futurista */
+    font-weight: 600 !important;
+}
+
+/* ======== PLACEHOLDER TAMBIÉN AZUL CLARO ======== */
+input[type="number"]::placeholder {
+    color: #A8DFFF !important;
+    opacity: 0.7 !important;
+}
+
+/* ======== INPUTS OSCUROS PARA QUE EL AZUL RESALTE ======== */
+input[type="number"] {
+    background-color: #0C1426 !important;
+    border: 1px solid #00BFFF !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+
 /* ======== TOOLTIP: fondo oscuro y texto claro ======== */
 [data-testid="stTooltipHoverTarget"] div {
     background-color: #0A1A2F !important;
