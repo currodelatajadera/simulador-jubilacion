@@ -64,11 +64,7 @@ input[type="number"], input[type="text"], select, textarea {
     color: #EAF2FF !important;
 }
 
-/* ======== NÚMEROS: azul futurista ======== */
-input[type="number"] {
-    color: #00BFFF !important;
-    font-weight: 600 !important;
-}
+
 
 /* ======== PLACEHOLDER: texto visible ======== */
 input::placeholder {
