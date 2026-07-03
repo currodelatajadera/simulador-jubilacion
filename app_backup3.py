@@ -188,6 +188,51 @@ div[data-baseweb="radio"] svg {
 }
 </style>
 """, unsafe_allow_html=True)
+
+# ============================================
+#   BLOQUE 2 — CORRECCIÓN VISUAL SRG FINAL
+# ============================================
+
+st.markdown("""
+<style>
+
+/* ======== NÚMEROS DE INPUTS ======== */
+input[type="number"] {
+    color: #00BFFF !important;
+    font-weight: 600 !important;
+}
+
+/* ======== FONDO DE INPUTS ======== */
+input[type="number"], input[type="text"], select, textarea {
+    background-color: #0C1426 !important;
+    border: 1px solid #00BFFF !important;
+    color: #EAF2FF !important;
+}
+
+/* ======== TOOLTIP ICONO ======== */
+[data-testid="stTooltipIcon"] svg {
+    fill: #00BFFF !important;
+    filter: drop-shadow(0 0 6px rgba(0,191,255,0.6));
+}
+
+/* ======== TOOLTIP TEXTO ======== */
+[data-testid="stTooltipHoverTarget"] div {
+    background-color: #0A1A2F !important;
+    color: #EAF2FF !important;
+    border: 1px solid #00BFFF !important;
+    box-shadow: 0 0 12px rgba(0,191,255,0.4);
+    font-size: 0.85rem !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+}
+[data-testid="stTooltipHoverTarget"] p,
+[data-testid="stTooltipHoverTarget"] span {
+    color: #EAF2FF !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 import streamlit as st
 
 tooltip_fix = """
