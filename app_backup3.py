@@ -37,6 +37,30 @@ input[type="number"] {
 
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+
+/* ======== NÚMEROS AZUL FUTURISTA — Streamlit Cloud ======== */
+input[type="number"], 
+input[type="number"]::-webkit-inner-spin-button, 
+input[type="number"]::-webkit-outer-spin-button {
+    color: #00BFFF !important;
+    font-weight: 600 !important;
+}
+
+/* ======== Forzar color del texto dentro del input ======== */
+div[data-baseweb="input"] input {
+    color: #00BFFF !important;
+}
+
+/* ======== Fondo oscuro y borde neón ======== */
+div[data-baseweb="input"] {
+    background-color: #0C1426 !important;
+    border: 1px solid #00BFFF !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
