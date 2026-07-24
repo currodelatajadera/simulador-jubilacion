@@ -1,4 +1,16 @@
 # ============================================
+# INICIALIZACIONES GLOBALES (ANTES DEL BLOQUE 1)
+# ============================================
+
+brecha = 0.0
+capital_necesario = 0.0
+capital_real_final_cliente = 0.0
+capital_real_final_recom = 0.0
+tipo_brecha_descripcion = ""
+evolucion_cliente = []
+evolucion_recom = [{"mes": 0, "aportada": 0, "total": 0, "inflacion": 0, "neta": 0}]
+
+# ============================================
 # BLOQUE 1 — IMPORTS, CSS Y FUNCIONES BASE
 # ============================================
 
@@ -8,6 +20,59 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import datetime
+# ============================================================
+# 🟦 ESTILOS GLOBALES SRG
+# ============================================================
+st.markdown("""
+<style>
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #101522 !important;
+    color: #EAF2FF !important;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #00BFFF !important;
+    font-weight: 600 !important;
+}
+div[data-testid="stMetricLabel"] {
+    color: #A8DFFF !important;
+}
+
+input[type="number"], input[type="text"], select, textarea {
+    background-color: #141A2B !important;
+    border: 1px solid #00BFFF !important;
+    color: #EAF2FF !important;
+}
+
+h1, h2, h3, h4 {
+    color: #EAF2FF !important;
+}
+
+.srg-title {
+    background: linear-gradient(135deg, #003366, #0055A4);
+    color: white !important;
+}
+
+button[kind="primary"] {
+    background-color: #0055A4 !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+}
+
+button[kind="secondary"] {
+    background-color: #1E3A5F !important;
+    color: #EAF2FF !important;
+}
+
+.srg-box {
+    background-color: #182235 !important;
+    border: 1px solid #00BFFF !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin-bottom: 12px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.set_page_config(
     page_title="Simulador de Jubilación SRG",
@@ -16,10 +81,23 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
+[data-testid="stMetricValue"] {
+    font-size: 1.4rem !important;
+    color: white !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.9rem !important;
+    color: #00cc66 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
 
 /* ======== NÚMEROS AZUL FUTURISTA (Cloud + Local) ======== */
 input[type="number"] {
-    color: #00BFFF !important;           /* azul futurista */
+    color: #00BFFF !important;
     font-weight: 600 !important;
 }
 
@@ -37,13 +115,14 @@ input[type="number"] {
 
 </style>
 """, unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 
 /* ======== NÚMEROS AZUL FUTURISTA — Streamlit Cloud ======== */
 input[type="number"], 
-input[type="number"]::-webkit-inner-spin-button, 
-input[type="number"]::-webkit-outer-spin-button {
+input[type="number"]::-webkit-inner-spin_button, 
+input[type="number"]::-webkit-outer-spin_button {
     color: #00BFFF !important;
     font-weight: 600 !important;
 }
@@ -88,8 +167,6 @@ input[type="number"], input[type="text"], select, textarea {
     color: #EAF2FF !important;
 }
 
-
-
 /* ======== PLACEHOLDER: texto visible ======== */
 input::placeholder {
     color: #EAF2FF !important;
@@ -99,9 +176,9 @@ input::placeholder {
 </style>
 """, unsafe_allow_html=True)
 
-# Estado del botón de explicación
 if "mostrar_explicacion" not in st.session_state:
     st.session_state.mostrar_explicacion = False
+
 st.markdown("""
 <style>
 
@@ -137,18 +214,11 @@ input[type="number"] {
 </style>
 """, unsafe_allow_html=True)
 
-
-# ============================================
-#   CSS GLOBAL PREMIUM SRG (HEADER + TÍTULOS)
-# ============================================
-
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');
 
-/* ============================================================
-   BLOQUE ANTI-FLASH — Fondo oscuro desde el primer frame
-   ============================================================ */
+/* BLOQUE ANTI-FLASH — Fondo oscuro desde el primer frame */
 html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     background-color: #05070D !important;
     background-image: none !important;
@@ -156,9 +226,7 @@ html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     color: #EAF2FF !important;
 }
 
-/* ============================================================
-   TOOLTIP SRG FINAL — Fondo oscuro y texto visible
-   ============================================================ */
+/* TOOLTIP SRG FINAL — Fondo oscuro y texto visible */
 [data-testid="stTooltipHoverTarget"] div,
 [data-testid="stTooltipHoverTarget"]:hover div {
     background-color: #0A1A2F !important;
@@ -182,9 +250,7 @@ html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     line-height: 1.4 !important;
 }
 
-/* ============================================================
-   TOOLTIP SRG UNIVERSAL — Hover personalizado
-   ============================================================ */
+/* TOOLTIP SRG UNIVERSAL — Hover personalizado */
 .srg-tooltip {
     position: relative;
     display: inline-block;
@@ -212,9 +278,7 @@ html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     visibility: visible;
 }
 
-/* ============================================================
-   HEADER SRG
-   ============================================================ */
+/* HEADER SRG */
 .srg-header {
     padding: 14px 24px;
     margin-bottom: 18px;
@@ -245,9 +309,7 @@ html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     margin-top: 6px;
 }
 
-/* ============================================================
-   TITULOS Y BLOQUES
-   ============================================================ */
+/* TITULOS Y BLOQUES */
 .srg-title {
     background: linear-gradient(135deg, #003366, #0055A4);
     color: white !important;
@@ -258,9 +320,7 @@ html, body, #root, section.main, div[data-testid="stAppViewContainer"] {
     margin-bottom: 6px;
 }
 
-/* ============================================================
-   SELECTBOX Y RADIO SRG OSCUROS
-   ============================================================ */
+/* SELECTBOX Y RADIO SRG OSCUROS */
 div[data-baseweb="select"] > div {
     background-color: #0A0F1F !important;
     color: #EAF2FF !important;
@@ -289,9 +349,7 @@ div[data-baseweb="radio"] svg {
     fill: #00BFFF !important;
 }
 
-/* ============================================================
-   FOOTER SRG
-   ============================================================ */
+/* FOOTER SRG */
 .srg-footer {
     margin-top: 30px;
     padding: 16px 12px;
@@ -307,7 +365,41 @@ div[data-baseweb="radio"] svg {
 }
 </style>
 """, unsafe_allow_html=True)
-import streamlit as st
+srg_css = """
+<style>
+.srg-header-box {
+    background: linear-gradient(90deg, #0b3c5d, #3282b8);
+    color: #ffffff;
+    padding: 18px 22px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+}
+.srg-header-box h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.srg-header-box p {
+    margin: 4px 0 0 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+.srg-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+}
+.srg-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+</style>
+"""
+st.markdown(srg_css, unsafe_allow_html=True)
+
 
 tooltip_fix = """
 <script>
@@ -326,10 +418,6 @@ observer.observe(document.body, { childList: true, subtree: true });
 """
 st.markdown(tooltip_fix, unsafe_allow_html=True)
 
-# ============================================
-#   HEADER SRG
-# ============================================
-
 header_html = """
 <div class="srg-header">
   <div class="srg-header-inner">
@@ -341,10 +429,20 @@ header_html = """
 </div>
 """
 st.markdown(header_html, unsafe_allow_html=True)
+# 🔧 Ajuste visual para títulos dentro de expanders
+st.markdown("""
+<style>
+div[data-testid="stExpander"] h1,
+div[data-testid="stExpander"] h2,
+div[data-testid="stExpander"] h3 {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# ============================================
-#   FUNCIONES BASE
-# ============================================
 
 def calcular_objetivo_y_gastos_futuros(ingresos_hoy, gastos_hoy, pct, inflacion, anos):
     factor = (1 + inflacion/100) ** anos
@@ -443,13 +541,13 @@ def marca_agua_srg():
 
 col1, col2, col3, col4 = st.columns(4)
 
-# DATOS PERSONALES
+# ===== DATOS PERSONALES =====
 if "edad_actual_input" not in st.session_state:
-    st.session_state.edad_actual_input = 47
+    st.session_state.edad_actual_input = 16
 if "edad_prevista_jub_input" not in st.session_state:
-    st.session_state.edad_prevista_jub_input = 67
+    st.session_state.edad_prevista_jub_input = 17
 if "esperanza_vida_input" not in st.session_state:
-    st.session_state.esperanza_vida_input = 85
+    st.session_state.esperanza_vida_input = 75
 
 with col1:
     st.markdown('<div class="srg-title">Datos personales</div>', unsafe_allow_html=True)
@@ -457,8 +555,9 @@ with col1:
 
     edad_actual = st.number_input(
         "Edad actual",
-        min_value=18,
+        min_value=16,
         max_value=70,
+        value=st.session_state.edad_actual_input,
         help="Tu edad hoy. Se usa para calcular cuántos años faltan hasta la jubilación.",
         key="edad_actual_input"
     )
@@ -467,6 +566,7 @@ with col1:
         "Edad prevista de jubilación",
         min_value=edad_actual + 1,
         max_value=75,
+        value=max(edad_actual + 1, st.session_state.edad_prevista_jub_input),
         help="Edad a la que deseas jubilarte. No puede ser menor o igual que tu edad actual.",
         key="edad_prevista_jub_input"
     )
@@ -475,22 +575,24 @@ with col1:
         "Esperanza de vida",
         min_value=75,
         max_value=100,
+        value=st.session_state.esperanza_vida_input,
         help="Estimación de años que vivirás según estadísticas.",
         key="esperanza_vida_input"
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# Correcciones de coherencia
 if edad_prevista_jub <= edad_actual:
     edad_prevista_jub = edad_actual + 1
 if esperanza_vida <= edad_prevista_jub:
     esperanza_vida = edad_prevista_jub + 1
 
-# COTIZACIÓN
+# ===== COTIZACIÓN =====
 if "anos_cotizados_hoy_input" not in st.session_state:
-    st.session_state.anos_cotizados_hoy_input = 15
+    st.session_state.anos_cotizados_hoy_input = 0
 if "anos_futuros_input" not in st.session_state:
-    st.session_state.anos_futuros_input = 20
+    st.session_state.anos_futuros_input = 0
 
 with col2:
     st.markdown('<div class="srg-title">Cotización</div>', unsafe_allow_html=True)
@@ -505,6 +607,7 @@ with col2:
         "Años cotizados hoy",
         min_value=0,
         max_value=max_cotizables_hoy,
+        value=st.session_state.anos_cotizados_hoy_input,
         help="Años cotizados a la Seguridad Social.",
         key="anos_cotizados_hoy_input"
     )
@@ -518,20 +621,20 @@ with col2:
         "Años que cotizarás desde hoy",
         min_value=0,
         max_value=max_anos_futuros,
+        value=st.session_state.anos_futuros_input,
         help="Años adicionales que seguirás cotizando.",
         key="anos_futuros_input"
     )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
+# Cálculos base del bloque 2
 anos_totales = anos_cotizados_hoy + anos_futuros
 anos_hasta_jub = max(1, edad_prevista_jub - edad_actual)
 anos_jubilacion = max(1, esperanza_vida - edad_prevista_jub)
 
-# ============================================
-# TIPO DE JUBILACIÓN — LÓGICA 2026 COMPLETA
-# ============================================
 
+# ===== TIPO DE JUBILACIÓN =====
 EDAD_LEGAL_2026 = 67
 
 if "tipo_jubilacion_input" not in st.session_state:
@@ -540,146 +643,183 @@ if "tipo_jubilacion_input" not in st.session_state:
 with col3:
     st.markdown('<div class="srg-title">Tipo de jubilación</div>', unsafe_allow_html=True)
     st.caption("Modalidad, requisitos, anticipos, penalizaciones y bonificaciones según normativa 2026.")
+    st.markdown("<div style='margin-top: 7px; height: 18px;'></div>", unsafe_allow_html=True)
 
-    opciones_jub = ["Ordinaria", "Anticipada voluntaria", "Anticipada involuntaria", "Demorada"]
-    idx_tipo = opciones_jub.index(st.session_state.tipo_jubilacion_input)
+    with st.expander("📘 Selecciona modalidad y requisitos", expanded=False):
 
-    # ⭐ Label alineado como los demás inputs
-    st.markdown("Tipo prevista")
+        opciones_jub = ["Ordinaria", "Anticipada voluntaria", "Anticipada involuntaria", "Demorada"]
+        idx_tipo = opciones_jub.index(st.session_state.tipo_jubilacion_input)
 
-    # ⭐ Sustituimos selectbox por radio (estilo select SRG)
-    tipo_jubilacion = st.radio(
-        "",
-        opciones_jub,
-        index=idx_tipo,
-        key="tipo_jubilacion_input",
-        label_visibility="collapsed"
+        tipo_jubilacion = st.radio(
+            "Tipo prevista",
+            opciones_jub,
+            index=idx_tipo,
+            key="tipo_jubilacion_input"
+        )
+
+        modo_valido = True
+        motivo_error = ""
+        coef_ajuste = 1.0
+
+        # ===== ORDINARIA =====
+        if tipo_jubilacion == "Ordinaria":
+            st.markdown("""
+            #### 🟦 Jubilación ordinaria
+            **Edad legal:** 67 años  
+            **Requisitos:** mínimo 15 años cotizados  
+            """)
+
+            # Solo mostrar validaciones si el usuario ya introdujo datos reales
+            if anos_totales > 0:
+                if anos_totales < 15:
+                    modo_valido = False
+                    motivo_error = "Para la jubilación ordinaria necesitas al menos 15 años cotizados."
+
+                elif edad_prevista_jub < EDAD_LEGAL_2026:
+                    st.warning(
+                        "La edad prevista es inferior a la edad legal. "
+                        "Con estos datos, **pasarías a una jubilación anticipada voluntaria** con penalización."
+                    )
+
+        # ===== ANTICIPADA VOLUNTARIA =====
+        elif tipo_jubilacion == "Anticipada voluntaria":
+            st.markdown("""
+            #### 🟧 Anticipada voluntaria
+            **Adelanto máximo:** 24 meses  
+            **Requisitos:** 35 años cotizados  
+            """)
+
+            if anos_totales > 0 and anos_totales < 35:
+                modo_valido = False
+                motivo_error = "Para la anticipada voluntaria necesitas 35 años cotizados."
+
+            meses_anticipo = st.number_input("Meses de anticipo", 1, 24, 1)
+            edad_prevista_jub = EDAD_LEGAL_2026 - meses_anticipo / 12
+
+            if edad_prevista_jub < 63:
+                modo_valido = False
+                motivo_error = "La anticipada voluntaria solo puede aplicarse desde los 63 años."
+
+            def coef_voluntaria(anos, meses):
+                trimestres = meses // 3
+                if anos < 38.5: red = 0.0525
+                elif anos < 41.5: red = 0.0475
+                elif anos < 44.5: red = 0.0425
+                else: red = 0.0325
+                return 1 - red * trimestres
+
+            coef_ajuste = coef_voluntaria(anos_totales, meses_anticipo)
+
+        # ===== ANTICIPADA INVOLUNTARIA =====
+        elif tipo_jubilacion == "Anticipada involuntaria":
+            st.markdown("""
+            #### 🟥 Anticipada involuntaria
+            **Adelanto máximo:** 48 meses  
+            **Requisitos:** 33 años cotizados  
+            """)
+
+            if anos_totales > 0 and anos_totales < 33:
+                modo_valido = False
+                motivo_error = "Para la anticipada involuntaria necesitas 33 años cotizados."
+
+            meses_anticipo = st.number_input("Meses de anticipo", 1, 48, 1)
+            edad_prevista_jub = EDAD_LEGAL_2026 - meses_anticipo / 12
+
+            if edad_prevista_jub < 61:
+                modo_valido = False
+                motivo_error = "La anticipada involuntaria solo puede aplicarse desde los 61 años."
+
+            def coef_involuntaria(anos, meses):
+                trimestres = meses // 3
+                if anos < 38.5: red = 0.075
+                elif anos < 41.5: red = 0.070
+                elif anos < 44.5: red = 0.065
+                else: red = 0.055
+                return 1 - red * trimestres
+
+            coef_ajuste = coef_involuntaria(anos_totales, meses_anticipo)
+
+        # ===== DEMORADA =====
+        elif tipo_jubilacion == "Demorada":
+            st.markdown("""
+            #### 🟩 Jubilación demorada
+            **Edad legal:** 67 años  
+            **Bonificación:** +4% por cada año de demora  
+            """)
+
+            if anos_totales > 0 and anos_totales < 15:
+                modo_valido = False
+                motivo_error = "Para la jubilación demorada necesitas al menos 15 años cotizados."
+
+            elif edad_actual < 60:
+                modo_valido = False
+                motivo_error = "La jubilación demorada solo aplica si ya estás próximo a la edad legal."
+
+            else:
+                meses_demora = st.number_input("Meses de demora", 1, 120, 1)
+                anos_demora = meses_demora / 12
+                coef_ajuste = 1 + anos_demora * 0.04
+                edad_prevista_jub = EDAD_LEGAL_2026 + anos_demora
+
+                st.metric("Meses de demora", f"{meses_demora} meses")
+                st.metric("Bonificación aplicada", f"+{(coef_ajuste - 1) * 100:.1f}%")
+                st.metric("Edad prevista de jubilación", f"{edad_prevista_jub:.1f} años")
+
+                if edad_prevista_jub <= EDAD_LEGAL_2026:
+                    modo_valido = False
+                    motivo_error = "La edad prevista debe ser mayor que la edad legal."
+
+        # ===== WARNING SRG (POSICIÓN CORRECTA) =====
+        if not modo_valido:
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:#b30000;
+                    color:white;
+                    padding:10px 15px;
+                    border-radius:6px;
+                    margin-top:10px;
+                    font-weight:500;
+                    text-align:center;">
+                    ⚠️ {motivo_error}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+       
+# ============================================================
+# 🟦 Mensaje SRG para informes (post-selección)
+# ============================================================
+
+mensaje_jubilacion_srg = ""
+
+# Caso ordinaria con edad inferior a la legal
+if tipo_jubilacion == "Ordinaria" and edad_prevista_jub < EDAD_LEGAL_2026:
+    mensaje_jubilacion_srg = (
+        "La edad prevista es inferior a la edad legal. "
+        "Con estos datos, pasarías a una jubilación anticipada voluntaria con penalización."
     )
 
-    modo_valido = True
-    motivo_error = ""
-    coef_ajuste = 1.0
-    meses_anticipo = 0
+# Caso anticipada voluntaria
+elif tipo_jubilacion == "Anticipada voluntaria":
+    mensaje_jubilacion_srg = (
+        f"Has seleccionado jubilación anticipada voluntaria con un anticipo de {meses_anticipo} meses."
+    )
 
-    # ⭐ Explicaciones SRG premium (títulos más pequeños)
-    if tipo_jubilacion == "Ordinaria":
-        st.markdown("""
-        #### 🟦 Jubilación ordinaria
-        **Edad legal:** 67 años (o 65 si se acreditan 38 años y 6 meses cotizados).  
-        **Requisitos de acceso:** mínimo **15 años cotizados**.  
-        **Porcentaje de la pensión:** depende de los años cotizados totales.  
-        - 15 años → 50%  
-        - De 16 a 36 años → +0,21% por mes  
-        - De 36 a 37 años → +0,19% por mes  
-        **100%** solo si se alcanzan **37 años cotizados**.  
-        **No hay penalización**, simplemente se aplica el porcentaje correspondiente.
-        """)
+# Caso anticipada involuntaria
+elif tipo_jubilacion == "Anticipada involuntaria":
+    mensaje_jubilacion_srg = (
+        f"Has seleccionado jubilación anticipada involuntaria con un anticipo de {meses_anticipo} meses."
+    )
 
-        if anos_totales < 15:
-            modo_valido = False
-            motivo_error = "No cumples los 15 años cotizados mínimos para la jubilación ordinaria."
-        elif edad_prevista_jub < EDAD_LEGAL_2026:
-            st.warning(f"La edad prevista ({edad_prevista_jub}) es inferior a la edad legal ({EDAD_LEGAL_2026}). Se aplicará la edad legal.")
-            edad_prevista_jub = EDAD_LEGAL_2026
+# Caso demorada
+elif tipo_jubilacion == "Demorada":
+    mensaje_jubilacion_srg = (
+        f"Has seleccionado jubilación demorada con una bonificación del {(coef_ajuste - 1) * 100:.1f}%."
+    )
+            
 
-    elif tipo_jubilacion == "Anticipada voluntaria":
-        st.markdown("""
-        #### 🟧 Anticipada voluntaria
-        **Adelanto máximo:** 24 meses.  
-        **Requisitos:** 35 años cotizados y no despido forzoso.  
-        **Penalización por trimestre:**
-        - < 38a6m → 5,25%  
-        - 38a6m–41a6m → 4,75%  
-        - 41a6m–44a6m → 4,25%  
-        - > 44a6m → 3,25%
-        """)
-
-        if anos_totales < 35:
-            modo_valido = False
-            motivo_error = "No cumples los 35 años cotizados para la anticipada voluntaria."
-
-        meses_anticipo = st.number_input(
-            "Meses de anticipo",
-            1, 24, 1
-        )
-
-        edad_prevista_jub = EDAD_LEGAL_2026 - meses_anticipo / 12
-
-        def coef_voluntaria(anos, meses):
-            trimestres = meses // 3
-            if anos < 38.5:
-                red = 0.0525
-            elif anos < 41.5:
-                red = 0.0475
-            elif anos < 44.5:
-                red = 0.0425
-            else:
-                red = 0.0325
-            return 1 - red * trimestres
-
-        coef_ajuste = coef_voluntaria(anos_totales, meses_anticipo)
-
-    elif tipo_jubilacion == "Anticipada involuntaria":
-        st.markdown("""
-        #### 🟥 Anticipada involuntaria
-        **Adelanto máximo:** 48 meses.  
-        **Requisitos:** 33 años cotizados y despido objetivo/ERE.  
-        **Penalización por trimestre:**
-        - < 38a6m → 7,5%  
-        - 38a6m–41a6m → 7%  
-        - 41a6m–44a6m → 6,5%  
-        - > 44a6m → 5,5%
-        """)
-
-        if anos_totales < 33:
-            modo_valido = False
-            motivo_error = "No cumples los 33 años cotizados para la anticipada involuntaria."
-
-        meses_anticipo = st.number_input(
-            "Meses de anticipo",
-            1, 48, 1
-        )
-
-        edad_prevista_jub = EDAD_LEGAL_2026 - meses_anticipo / 12
-
-        def coef_involuntaria(anos, meses):
-            trimestres = meses // 3
-            if anos < 38.5:
-                red = 0.075
-            elif anos < 41.5:
-                red = 0.070
-            elif anos < 44.5:
-                red = 0.065
-            else:
-                red = 0.055
-            return 1 - red * trimestres
-
-        coef_ajuste = coef_involuntaria(anos_totales, meses_anticipo)
-
-    elif tipo_jubilacion == "Demorada":
-        st.markdown("""
-        #### 🟩 Jubilación demorada
-        **Edad:** mayor de 67 años.  
-        **Bonificación:** +4% por cada año completo de demora.
-        """)
-
-        if edad_prevista_jub <= EDAD_LEGAL_2026:
-            modo_valido = False
-            motivo_error = f"Para demorada, la edad prevista debe ser mayor que {EDAD_LEGAL_2026}."
-        else:
-            anos_demora = edad_prevista_jub - EDAD_LEGAL_2026
-            coef_ajuste = 1 + anos_demora * 0.04
-            meses_demora = int(anos_demora * 12)
-            st.metric("Meses de demora", f"{meses_demora} meses")
-
-    if not modo_valido:
-        st.markdown(
-            f'<div class="msg-error-srg">{motivo_error}</div>',
-            unsafe_allow_html=True
-        )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
+# ===== INGRESOS Y GASTOS =====
 with col4:
     st.markdown('<div class="srg-title">Ingresos y gastos</div>', unsafe_allow_html=True)
     st.caption("Tus ingresos y gastos actuales nos permiten estimar tu objetivo económico futuro.")
@@ -688,12 +828,13 @@ with col4:
         "Ingresos mensuales (€)",
         min_value=0,
         max_value=20000,
+        value=0,
         help="Tus ingresos netos actuales.",
         key="ingresos_input"
     )
 
     if "gastos_input" not in st.session_state:
-        st.session_state.gastos_input = min(1800, ingresos)
+        st.session_state.gastos_input = 0
 
     st.session_state.gastos_input = min(st.session_state.gastos_input, ingresos)
 
@@ -701,6 +842,7 @@ with col4:
         "Gastos mensuales (€)",
         min_value=0,
         max_value=20000,
+        value=st.session_state.gastos_input,
         help="Tus gastos mensuales actuales.",
         key="gastos_input"
     )
@@ -714,113 +856,104 @@ with col4:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# ===== PROTECCIÓN DE VARIABLES (EVITA NameError) =====
+if "ingresos" not in locals():
+    ingresos = 0
+if "gastos" not in locals():
+    gastos = 0
+
 # ============================================
-# BLOQUE 3 — PENSIÓN, OBJETIVO Y BRECHA
+# BLOQUE 3 — PENSIÓN, OBJETIVO Y BRECHA (VERSIÓN PULIDA SRG)
 # ============================================
 
+# Límites reales de la Seguridad Social para 2026
 PENSION_MAX_2026 = 3359.60
-EXTRA_REVAL = 0.00115
 BASE_MAX_ESPANA_2026 = 4720
+EXTRA_REVAL = 0.00115
 
 colA, colB, colC, colD = st.columns(4)
 
-# PENSIÓN E INFLACIÓN
+# ============================================================
+# 🟦 1. PENSIÓN E INFLACIÓN — SOLO BASE REGULADORA SRG
+# ============================================================
 with colA:
     st.markdown('<div class="srg-title">Pensión e inflación</div>', unsafe_allow_html=True)
-    st.caption("Estos valores determinan tu pensión futura ajustada a la inflación.")
+    st.caption("Aquí calculamos tu pensión futura y ajustamos todo al coste de la vida.")
 
-    modo_br = st.radio(
-        "Modo de cálculo de Base Reguladora",
-        ["Introducir base reguladora manualmente", "Calcular base reguladora SRG"],
-        help="La Base Reguladora se calcula con las bases de cotización de los últimos 29 años.",
-        key="modo_br_input"
+    # -----------------------------
+    # INPUTS (van arriba)
+    # -----------------------------
+    st.markdown("#### Base reguladora SRG (automática)")
+    st.caption("La aplicación calcula tu base reguladora automáticamente. No tienes que saberla ni calcularla.")
+
+    salario_actual = st.number_input(
+        "Salario mensual actual (€)",
+        min_value=0,
+        max_value=20000,
+        value=0,
+        help="Tu salario bruto mensual actual.",
+        key="salario_actual_input"
     )
 
-    if modo_br == "Introducir base reguladora manualmente":
-        base = st.number_input(
-            "Base reguladora (€)",
-            min_value=0,
-            max_value=BASE_MAX_ESPANA_2026,
-            value=1500,
-            help="Introduce directamente tu base reguladora estimada.",
-            key="base_reguladora_input"
-        )
-    else:
-        st.markdown("#### Calcular base reguladora SRG")
-        st.caption("Los cálculos respetan los límites legales de cotización y pensión.")
+    crecimiento_salarial = st.number_input(
+        "Crecimiento salarial anual (%)",
+        min_value=0.0,
+        max_value=10.0,
+        value=3.0,
+        step=0.1,
+        help="En España, el crecimiento salarial medio en 2026 ronda el 3 %. Dato basado en INE y Banco de España.",
+        key="crecimiento_salarial_input"
+    )
 
-        salario_actual = st.number_input(
-            "Salario mensual actual (€)",
-            min_value=0,
-            max_value=20000,
-            value=2000,
-            help="Salario bruto mensual aproximado.",
-            key="salario_actual_input"
-        )
+    ipc_actualizacion = st.number_input(
+        "Actualización IPC anual (%)",
+        min_value=0.0,
+        max_value=10.0,
+        value=2.5,
+        step=0.1,
+        help="El IPC medio previsto para España en 2026 es del 2,5 %. Se usa para actualizar cotizaciones antiguas.",
+        key="ipc_actualizacion_input"
+    )
 
-        crecimiento_salarial = st.number_input(
-            "Crecimiento salarial anual (%)",
-            min_value=0.0,
-            max_value=10.0,
-            value=1.5,
-            step=0.1,
-            help="Incremento medio anual de tu salario.",
-            key="crecimiento_salarial_input"
-        )
+    # -----------------------------
+    # CÁLCULO AUTOMÁTICO SRG
+    # -----------------------------
+    meses_totales = 29 * 12
+    bases = []
+    for i in range(meses_totales):
+        anos_pasados = (meses_totales - 1 - i) / 12
+        salario_estimado = salario_actual / ((1 + crecimiento_salarial/100) ** anos_pasados) if salario_actual > 0 else 0
+        bases.append(salario_estimado)
 
-        ipc_actualizacion = st.number_input(
-            "Actualización IPC anual (%)",
-            min_value=0.0,
-            max_value=10.0,
-            value=2.0,
-            step=0.1,
-            help="Factor de actualización de bases antiguas.",
-            key="ipc_actualizacion_input"
-        )
+    bases_actualizadas = []
+    for i, base_i in enumerate(bases):
+        anos_pasados = (meses_totales - 1 - i) / 12
+        factor_ipc = (1 + ipc_actualizacion/100) ** anos_pasados
+        bases_actualizadas.append(base_i * factor_ipc)
 
-        anos_con_salario = st.number_input(
-            "Años cotizados con salario conocido",
-            min_value=1,
-            max_value=29,
-            value=10,
-            help="Años recientes con salario aproximado.",
-            key="anos_con_salario_input"
-        )
+    mejores_322 = sorted(bases_actualizadas)[24:]
+    base = sum(mejores_322) / 322 if len(mejores_322) == 322 else (sum(mejores_322) / max(1, len(mejores_322)))
 
-        meses_totales = 29 * 12
-        bases = []
-        for i in range(meses_totales):
-            anos_pasados = (meses_totales - 1 - i) / 12
-            salario_estimado = salario_actual / ((1 + crecimiento_salarial/100) ** anos_pasados)
-            bases.append(salario_estimado)
+    # Límite legal
+    if base > BASE_MAX_ESPANA_2026:
+        base = BASE_MAX_ESPANA_2026
+        st.warning(f"La base reguladora supera el límite legal ({BASE_MAX_ESPANA_2026:,.0f} €). Se ajusta automáticamente.")
 
-        bases_actualizadas = []
-        for i, base_i in enumerate(bases):
-            anos_pasados = (meses_totales - 1 - i) / 12
-            factor_ipc = (1 + ipc_actualizacion/100) ** anos_pasados
-            bases_actualizadas.append(base_i * factor_ipc)
+    # -----------------------------
+    # RESULTADO PRINCIPAL (arriba)
+    # -----------------------------
+    st.markdown(f'<div class="msg-green-srg">Base reguladora calculada: {base:,.0f} €</div>', unsafe_allow_html=True)
 
-        bases_ordenadas = sorted(bases_actualizadas)
-        mejores_322 = bases_ordenadas[24:]
-        base = sum(mejores_322) / 322 if len(mejores_322) == 322 else (sum(mejores_322) / max(1, len(mejores_322)))
-
-        if base > BASE_MAX_ESPANA_2026:
-            base = BASE_MAX_ESPANA_2026
-            st.warning(f"La base reguladora supera el límite legal ({BASE_MAX_ESPANA_2026:,.0f} €). Ajustada automáticamente.")
-
-        st.markdown(
-    f'<div class="msg-green-srg">Base reguladora calculada: {base:,.0f} €</div>',
-    unsafe_allow_html=True
-)
-
-
+    # -----------------------------
+    # INPUTS ADICIONALES
+    # -----------------------------
     inflacion = st.number_input(
         "Inflación anual (%)",
         min_value=0.0,
         max_value=10.0,
-        value=2.0,
+        value=2.4,
         step=0.1,
-        help="La inflación reduce el poder adquisitivo.",
+        help="La inflación esperada en España para 2026 es del 2,4 %. Dato del Banco de España.",
         key="inflacion_input"
     )
 
@@ -828,1267 +961,1162 @@ with colA:
         "Revalorización anual pensión (%)",
         min_value=0.0,
         max_value=5.0,
-        value=1.5,
+        value=2.8,
         step=0.1,
-        help="Incremento anual previsto de la pensión.",
+        help="Las pensiones se revalorizan según el IPC medio del año anterior. En 2026 la subida aplicada fue del 2,8 %.",
         key="reval_input"
     )
 
-    st.markdown(
-    '<div class="msg-ok-srg">En España existe una base máxima de cotización. Aunque ganes más, solo se computa hasta ese límite.</div>',
-    unsafe_allow_html=True
-)
-
-
-    with st.expander("📘 Explicación: IPC, inflación y revalorización"):
-        st.markdown("""
-        - **IPC anual**: se usa para actualizar las bases de cotización antiguas y calcular tu Base Reguladora SRG.  
-        - **Inflación anual**: proyecta el coste de vida futuro y afecta a tu nivel de vida y brecha.  
-        - **Revalorización de pensión**: estima cuánto subirá tu pensión cada año una vez jubilado.  
+    # -----------------------------
+    # EXPLICACIONES (abajo)
+    # -----------------------------
+    with st.expander("📘 ¿Cómo calcula SRG tu base reguladora?"):
+        st.markdown(f"""
+        - Partimos de tu salario actual: **{salario_actual:,.0f} €**  
+        - Retrocedemos año a año aplicando tu crecimiento salarial  
+        - Actualizamos esas cotizaciones antiguas con el IPC  
+        - Nos quedamos con las **322 mejores cotizaciones**  
+        - La media es tu **base reguladora SRG**
         """)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="msg-ok-srg">📌 Límite máximo de cotización: <b>{BASE_MAX_ESPANA_2026:,.0f} €</b> al mes.</div>',
+        unsafe_allow_html=True
+    )
 
-def pension_maxima_proyectada(anos, inflacion_pct):
-    return PENSION_MAX_2026 * ((1 + inflacion_pct/100 + EXTRA_REVAL) ** anos)
+    st.markdown(
+        f'<div class="msg-ok-srg">📌 Límite máximo de pensión: <b>{PENSION_MAX_2026:,.0f} €</b> al mes.</div>',
+        unsafe_allow_html=True
+    )
 
-if "modo_valido" not in locals():
-    modo_valido = True
-if "coef_ajuste" not in locals():
-    coef_ajuste = 1.0
+    with st.expander("📘 ¿Por qué existen límites máximos?"):
+        st.markdown(f"""
+        - Solo puedes cotizar hasta **{BASE_MAX_ESPANA_2026:,.0f} €**  
+        - La pensión máxima es **{PENSION_MAX_2026:,.0f} €**
+        """)
 
+    with st.expander("📘 Inflación y revalorización"):
+        st.markdown("""
+        - La inflación mide cómo suben los precios  
+        - La revalorización actualiza tu pensión cada año  
+        """)
+
+# ============================================================
+# 🟦 2. RESUMEN PENSIÓN — EXPLICACIONES COLOQUIALES
+# ============================================================
 pct = min(1.0, anos_totales / 37) if modo_valido else 0.0
-
 base_reguladora_ajustada = min(base, BASE_MAX_ESPANA_2026)
 pension_hoy = base_reguladora_ajustada * pct * coef_ajuste
 pension_futura_sin_tope = pension_hoy * ((1 + reval/100) ** anos_hasta_jub)
-pension_max_futura = pension_maxima_proyectada(anos_hasta_jub, inflacion)
-pension_futura = min(pension_futura_sin_tope, pension_max_futura)
 
-# RESUMEN PENSIÓN
+# Límite legal real: pensión máxima actualizada a futuro
+pension_max_futura = PENSION_MAX_2026 * ((1 + inflacion/100 + EXTRA_REVAL) ** anos_hasta_jub)
+
+# 🔧 Ajuste automático al límite legal
+limite_aplicado = pension_futura_sin_tope > pension_max_futura
+pension_futura = pension_max_futura if limite_aplicado else pension_futura_sin_tope
+
 with colB:
     st.markdown('<div class="srg-title">Resumen pensión</div>', unsafe_allow_html=True)
     st.caption("Tu pensión estimada según tus años cotizados y tu base reguladora.")
 
+    # -----------------------------
+    # ERROR SRG (igual que bloque anterior)
+    # -----------------------------
     if not modo_valido:
         st.markdown(
-            '<div class="msg-error-srg">La modalidad de jubilación seleccionada no es válida con tus años cotizados o edad prevista.</div>',
+            f"""
+            <div style="
+                background-color:#b30000;
+                color:white;
+                padding:10px 15px;
+                border-radius:6px;
+                margin-top:10px;
+                font-weight:500;
+                text-align:center;">
+                ⚠️ {motivo_error}
+            </div>
+            """,
             unsafe_allow_html=True
         )
-        st.caption("Revisa el bloque de 'Tipo de jubilación' para ver los requisitos legales.")
     else:
+        # -----------------------------
+        # MÉTRICAS (arriba)
+        # -----------------------------
         st.metric("Porcentaje sobre base", f"{pct*100:,.1f} %")
         st.metric("Pensión ajustada hoy", f"{pension_hoy:,.0f} €")
         st.metric("Pensión futura estimada", f"{pension_futura:,.0f} €/mes")
 
-        if pension_futura == pension_max_futura:
+        # 🔶 Aviso si se aplica el límite legal
+        if limite_aplicado:
             st.warning(
-                f"La pensión futura calculada supera el límite legal permitido. "
-                f"Se ha aplicado el tope máximo proyectado de {pension_max_futura:,.0f} €/mes."
+                f"La pensión calculada (**{pension_futura_sin_tope:,.0f} €**) "
+                f"supera el límite legal futuro. Se ajusta automáticamente a "
+                f"**{pension_futura:,.0f} €**."
             )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        # -----------------------------
+        # EXPLICACIONES (abajo)
+        # -----------------------------
+        with st.expander("📘 ¿De dónde sale cada número?"):
+            st.markdown(f"""
+### 🟦 ¿Cómo calcula la Seguridad Social tu pensión?
 
-# NIVEL DE VIDA
+Tu pensión depende de tres elementos:
+
+---
+
+### 1️⃣ Tus años cotizados  
+Has cotizado **{anos_totales} años**.  
+Con esos años, la Seguridad Social te reconoce:  
+**{pct*100:.1f}%** de la pensión completa sobre tu base reguladora.
+
+---
+
+### 2️⃣ Tu base reguladora  
+Es la media de tus **322 mejores cotizaciones**.  
+En tu caso, el simulador ha calculado una base reguladora de:  
+**{base:,.0f} €**
+
+---
+
+### 3️⃣ Ajustes según tu tipo de jubilación  
+La Seguridad Social aplica un ajuste según **cómo te jubiles**.  
+Ese número (**{coef_ajuste:.3f}**) representa una **reducción o aumento** sobre la pensión completa.
+
+A continuación tienes la explicación **según tu modalidad**:
+
+---
+
+## 🔵 Jubilación ordinaria (edad legal)
+- No hay penalización ni bonificación.  
+- El coeficiente suele ser **1.000**.  
+- Significa: **“Tu pensión se calcula al 100 % según tus años cotizados.”**  
+- El porcentaje **{pct*100:.1f}%** indica qué parte de la pensión completa te corresponde por tus años cotizados.
+
+---
+
+## 🟠 Jubilación anticipada voluntaria
+Si decides jubilarte antes por decisión propia, la Seguridad Social aplica una **reducción proporcional**.
+
+Penalizaciones típicas:
+| Anticipo | Reducción |
+|---------|-----------|
+| 12 meses | 4% – 6% |
+| 24 meses | 8% – 12% |
+| 36 meses | 12% – 18% |
+| 48 meses | 17% – 21% |
+
+Tu coeficiente **{coef_ajuste:.3f}** equivale a una **reducción del {100 - coef_ajuste*100:.1f}%** sobre la pensión completa.
+
+---
+
+## 🔴 Jubilación anticipada involuntaria
+Si el cese laboral **no fue voluntario**, la reducción es **más suave**.
+
+Motivos reconocidos:
+- Despido objetivo o colectivo  
+- Cierre de empresa  
+- Fuerza mayor  
+- Fin de contrato sin renovación  
+- Acoso laboral o violencia de género  
+
+Penalizaciones típicas:
+| Anticipo | Reducción |
+|---------|-----------|
+| 12 meses | 3% – 5% |
+| 24 meses | 6% – 10% |
+| 36 meses | 10% – 15% |
+| 48 meses | 15% – 19% |
+
+Tu coeficiente **{coef_ajuste:.3f}** refleja una **reducción del {100 - coef_ajuste*100:.1f}%**,  
+que es **más baja que la penalización voluntaria**.
+
+---
+
+## 🟢 Jubilación demorada
+Si decides jubilarte más tarde, la Seguridad Social **premia tu esfuerzo** con una bonificación.
+
+Bonificaciones típicas:
+| Retraso | Aumento |
+|---------|---------|
+| 12 meses | +4% |
+| 24 meses | +8% |
+| 36 meses | +12% |
+
+Tu coeficiente **{coef_ajuste:.3f}** equivale a un **aumento del {(coef_ajuste*100 - 100):.1f}%** sobre la pensión completa.
+
+---
+
+## 🟦 En tu caso
+Tu modalidad es **{tipo_jubilacion}**, con un coeficiente de **{coef_ajuste:.3f}**,  
+lo que significa que tu pensión se ajusta según las condiciones de esa modalidad.
+
+---
+
+### 🟦 Resultado final  
+Pensión hoy (antes de inflación):  
+**{pension_hoy:,.0f} € / mes**
+
+Pensión futura estimada (con revalorización y límite legal):  
+**{pension_futura:,.0f} € / mes**
+
+Así puedes ver exactamente de dónde sale cada número.
+            """)
+
+# ============================================================
+# 🟦 3. TU NIVEL DE VIDA — EXPLICACIONES COLOQUIALES
+# ============================================================
 with colC:
     st.markdown('<div class="srg-title">Tu nivel de vida en la jubilación</div>', unsafe_allow_html=True)
-    st.caption("Estimamos cuánto necesitarás cada mes al jubilarte según tu nivel de vida actual.")
+    st.caption("Calculamos cuánto dinero necesitarás cada mes cuando te jubiles.")
 
-    if modo_br == "Calcular base reguladora SRG":
-        ingresos_hoy = salario_actual
-        st.markdown(
-            f'<div class="msg-ok-srg">Usando tu salario mensual real ({ingresos_hoy:,.0f} €) para estimar tu nivel de vida.</div>',
-            unsafe_allow_html=True
-        )
-    else:
-        ingresos_hoy = st.number_input(
-            "¿Cuánto ganas al mes ahora? (€)",
-            min_value=0,
-            max_value=20000,
-            value=2000,
-            help="Este dato nos permite estimar tu nivel de vida actual.",
-            key="ingresos_hoy_input"
-        )
+    ingresos_hoy = ingresos
+    gastos_hoy = gastos
 
-    porcentaje_gastos = st.number_input(
-        "¿Qué parte de tus gastos crees que seguirás teniendo al jubilarte? (%)",
-        min_value=50,
-        max_value=110,
-        value=90,
-        help="Por ejemplo, si crees que gastarás el 90% de lo que gastas hoy, introduce 90.",
-        key="porcentaje_gastos_input"
+    modo_nivel_vida = st.radio(
+        "Modo de cálculo del nivel de vida",
+        ["Objetivo económico (sobre ingresos)", "Gastos reales (sobre gastos)"],
+        horizontal=True,
+        key="modo_nivel_vida_input"
     )
 
-    objetivo_futuro = ingresos_hoy * (porcentaje_gastos / 100) * ((1 + inflacion/100) ** anos_hasta_jub)
-    gastos_futuros = gastos * ((1 + inflacion/100) ** anos_hasta_jub)
+    porcentaje_mantenimiento = st.number_input(
+        "Porcentaje de mantenimiento del nivel de vida (%)",
+        min_value=50,
+        max_value=110,
+        value=100,
+        key="porcentaje_mantenimiento_input"
+    )
 
-    st.metric("Lo que necesitarás cada mes al jubilarte", f"{objetivo_futuro:,.0f} €")
-    st.caption("Cantidad mensual necesaria para mantener tu estilo de vida cuando te jubiles.")
+    # Inflación anual y años hasta jubilación (ajusta nombres si en tu código son otros)
+    # inflacion_anual debe estar definida antes (slider o input)
+    # anos_hasta_jub = edad_prevista_jub - edad_actual debe existir antes
+    factor_inflacion = (1 + inflacion / 100) ** anos_hasta_jub
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    if "Objetivo económico" in modo_nivel_vida:
+        nivel_vida_hoy = ingresos_hoy * (porcentaje_mantenimiento / 100)
+    else:
+        nivel_vida_hoy = gastos_hoy * (porcentaje_mantenimiento / 100)
 
-# BRECHA
+    nivel_vida_futuro = nivel_vida_hoy * factor_inflacion
+
+    st.metric("Lo que necesitarás cada mes al jubilarte", f"{nivel_vida_futuro:,.0f} €")
+
+    # ============================
+    # 📘 EXPANDER — EXPLICACIÓN CLARA PARA CLIENTES
+    # ============================
+    with st.expander("📘 ¿Cómo calculamos tu nivel de vida futuro?"):
+        st.markdown(f"""
+Aquí calculamos cuánto dinero necesitarás cada mes cuando te jubiles.
+
+Lo hacemos a partir de tus ingresos o gastos actuales, aplicando el porcentaje que quieres mantener
+y teniendo en cuenta la inflación acumulada hasta el año en que te jubiles.
+
+Este valor representa el dinero que necesitarás cada mes para vivir con el mismo ritmo de vida que tienes hoy.
+
+---
+
+### 🟦 Datos utilizados en el cálculo
+
+**Ingresos actuales:** {ingresos_hoy:,.0f} €  
+**Gastos actuales:** {gastos_hoy:,.0f} €  
+**Nivel de vida hoy:** {nivel_vida_hoy:,.0f} € / mes  
+**Inflación anual considerada:** {inflacion:.1f}%  
+**Años hasta tu jubilación:** {anos_hasta_jub} años  
+**Factor acumulado por inflación:** x{factor_inflacion:.2f}
+
+---
+
+### 🟦 ¿De dónde sale el factor acumulado?
+
+El factor x{factor_inflacion:.2f} indica cuánto habrán subido los precios desde hoy
+hasta el año en que te jubiles.
+
+Se calcula aplicando la inflación anual durante {anos_hasta_jub} años, con esta fórmula:
+
+(1 + inflación anual) elevado al número de años hasta la jubilación.
+
+En tu caso:
+
+(1 + {inflacion/100:.4f}) elevado a {anos_hasta_jub} años = x{factor_inflacion:.2f}
+
+Esto significa que dentro de {anos_hasta_jub} años, necesitarás aproximadamente
+{(factor_inflacion - 1) * 100:.1f}% más dinero para mantener el mismo nivel de vida que hoy.
+
+---
+
+### 🟦 Resultado final
+
+En el año de tu jubilación, esto equivale a:  
+**{nivel_vida_futuro:,.0f} € / mes**
+        """)
+
+# ============================================================
+# 🟩 CÁLCULO DEL NIVEL DE VIDA FUTURO — BASES PARA LA BRECHA
+# ============================================================
+
+pct_nivel_vida = porcentaje_mantenimiento
+
+nivel_vida_futuro_objetivo = ingresos_hoy * (pct_nivel_vida / 100) * factor_inflacion
+nivel_vida_futuro_gastos = gastos_hoy * (pct_nivel_vida / 100) * factor_inflacion
+
+# ============================================================
+# 🟦 4. BRECHA — EXPLICACIONES COLOQUIALES
+# ============================================================
 with colD:
     st.markdown('<div class="srg-title">Brecha</div>', unsafe_allow_html=True)
-    st.caption("Diferencia entre tu pensión futura y el nivel de vida que deseas mantener.")
+    st.caption("Aquí vemos si tu pensión futura cubre tu nivel de vida… o si falta dinero.")
 
     modo_brecha = st.radio(
         "¿Qué quieres cubrir?",
         ["Objetivo económico", "Gastos reales"],
         horizontal=True,
-        help="Elige si quieres cubrir tu objetivo deseado (ingresos) o tus gastos reales proyectados.",
         key="modo_brecha_input"
     )
 
+    # ============================
+    # LÓGICA DEL SELECTOR
+    # ============================
     if modo_brecha == "Objetivo económico":
-        brecha = max(0.0, objetivo_futuro - pension_futura)
-        tipo_brecha_descripcion = "tu objetivo económico (ingresos deseados en jubilación)"
+        nivel_usado = nivel_vida_futuro_objetivo
+        texto_modo = (
+            "Tu nivel de vida futuro se calcula a partir de tus ingresos actuales, "
+            "actualizados a precios del año en que te jubiles."
+        )
     else:
-        brecha = max(0.0, gastos_futuros - pension_futura)
-        tipo_brecha_descripcion = "tus gastos reales proyectados en jubilación"
+        nivel_usado = nivel_vida_futuro_gastos
+        texto_modo = (
+            "Tu nivel de vida futuro se calcula a partir de tus gastos actuales, "
+            "actualizados a precios del año en que te jubiles."
+        )
 
+    # ============================
+    # CÁLCULO DE BRECHA
+    # ============================
+    brecha = max(0.0, nivel_usado - pension_futura)
+
+    # ============================
+    # VISUALIZACIÓN SRG
+    # ============================
     st.metric("Brecha mensual a cubrir", f"{brecha:,.0f} €")
+    st.caption(texto_modo)
 
-    if brecha == 0:
-        st.caption("Tu pensión futura supera el nivel de vida estimado, por lo que no existe brecha que cubrir.")
+    # 🔵 NUEVAS MÉTRICAS PARA QUE EL CLIENTE ENTIENDA DE DÓNDE SALE TODO
+    st.metric("Nivel de vida futuro (ingresos)", f"{nivel_vida_futuro_objetivo:,.0f} €")
+    st.metric("Nivel de vida futuro (gastos)", f"{nivel_vida_futuro_gastos:,.0f} €")
 
-    with st.expander("💡 Explicación de brecha y cómo afecta al plan de ahorro"):
+    # ============================
+    # 📘 EXPANDER — EXPLICACIÓN CLARA PARA CLIENTES
+    # ============================
+    with st.expander("📘 ¿Qué es la brecha?"):
         st.markdown(f"""
-        **Brecha económica**  
-        Es la diferencia mensual entre tu pensión futura y el dinero que necesitarás para mantener tu nivel de vida.
+Aquí comparamos lo que necesitarás cada mes cuando te jubiles con la pensión que tendrás.
 
-        - Si eliges **Objetivo económico**, la brecha se calcula respecto a {tipo_brecha_descripcion}.  
-        - Si eliges **Gastos reales**, la brecha se calcula respecto a tus gastos actuales proyectados con inflación.
+La brecha es la diferencia entre esas dos cifras:
 
-        Esta brecha es la base de todo el plan de ahorro:  
-        - Se usa para calcular el **capital necesario** durante la jubilación.  
-        - De ella se deriva la **cuota recomendada** y todas las **simulaciones de cuotas**.  
+- Si tu pensión es menor que lo que necesitarás, aparece una brecha mensual a cubrir.
+- Si tu pensión es igual o mayor, significa que tu nivel de vida está asegurado.
+
+---
+
+**Nivel de vida futuro usado en el cálculo:** {nivel_usado:,.0f} € / mes  
+**Pensión futura estimada:** {pension_futura:,.0f} € / mes  
+
+**Brecha mensual:** {brecha:,.0f} € / mes
         """)
 
-    st.markdown('</div>', unsafe_allow_html=True)
 
-# ============================================
-# BLOQUE 4 — PLAN DE AHORRO + GRÁFICA + SIMULACIONES
-# ============================================
 
-st.markdown('<div class="srg-title">Plan de ahorro recomendado</div>', unsafe_allow_html=True)
-st.caption("El plan se construye para cubrir la brecha que has elegido (objetivo económico o gastos reales) usando la rentabilidad asumida.")
 
-col_left, col_right = st.columns([0.42, 0.58])
+import pandas as pd
+import plotly.graph_objects as go
 
-with col_left:
-    st.markdown("Rentabilidad anual esperada (%)")
 
-    st.markdown(
-        """
-        <style>
-        .srg-rentabilidad input {
-            width: 110px !important;
-            text-align: center;
-            border-radius: 6px !important;
-            border: 1px solid #c7d4e5 !important;
-            background-color: #f8f9fb !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+# ============================================================
+# BLOQUE 4 — SIMULACIÓN DE AHORRO PERSONALIZADA SRG
+# ============================================================
 
-    rent_col, _ = st.columns([0.5, 0.5])
-    with rent_col:
-        rentabilidad_pct = st.number_input(
-            "",
-            0.0, 15.0, 4.0, 0.1,
-            key="rentabilidad_pct_input",
-            label_visibility="collapsed"
-        )
-
-    anos_jubilacion = max(1, esperanza_vida - edad_prevista_jub)
-    capital_necesario = max(0.0, brecha * 12 * anos_jubilacion)
-
-    if anos_hasta_jub > 0:
-        r_m = (1 + rentabilidad_pct/100) ** (1/12) - 1
-        n_meses = int(anos_hasta_jub * 12)
-        if r_m > 0:
-            aportacion_recom = capital_necesario * r_m / ((1 + r_m) ** n_meses - 1)
-        else:
-            aportacion_recom = capital_necesario / max(1, n_meses)
-    else:
-        aportacion_recom = capital_necesario / 12 if capital_necesario > 0 else 0.0
-
-    evolucion_recom = calcular_evolucion_mensual(
-        anos_hasta_jub, rentabilidad_pct, inflacion, aportacion_recom
-    )
-
-    capital_total_recom = evolucion_recom[-1].get("total", 0.0)
-    capital_real_final_recom = evolucion_recom[-1].get("neta", 0.0)
-
-    m1, m2 = st.columns(2)
-    with m1:
-        st.metric("Capital necesario", f"{capital_necesario:,.0f} €")
-        st.metric("Capital total recomendado", f"{capital_total_recom:,.0f} €")
-    with m2:
-        st.metric("Aportación mensual recomendada", f"{aportacion_recom:,.0f} €")
-        st.metric("Capital neto recomendado", f"{capital_real_final_recom:,.0f} €")
-
-    with st.expander("📘 Explicación de la cuota recomendada y la rentabilidad"):
-        st.markdown(f"""
-        La **cuota recomendada** se calcula para cubrir la brecha mensual de **{brecha:,.0f} €** durante {anos_jubilacion} años de jubilación.
-
-        - Se asume una **rentabilidad anual** del **{rentabilidad_pct:,.1f}%**, aplicada de forma mensual.  
-        - Cuanto mayor sea la rentabilidad, menor cuota necesitas para alcanzar el mismo capital.  
-        - Si la rentabilidad baja, la cuota recomendada aumenta para compensar.
-
-        Esta cuota es el punto de referencia para todas las simulaciones posteriores (tu propia cuota y la comparativa de cuotas).
-        """)
-
-with col_right:
-    evo_sin0 = evolucion_recom[1:] if len(evolucion_recom) > 1 else []
-    anos_evo = [fila["mes"] / 12 for fila in evo_sin0]
-    total_evo = [fila["total"] for fila in evo_sin0]
-    aportada_evo = [fila["aportada"] for fila in evo_sin0]
-    neta_evo = [fila["neta"] for fila in evo_sin0]
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=anos_evo, y=total_evo,
-        mode='lines',
-        name='Total',
-        line=dict(color='#00BFFF', width=3)
-    ))
-    fig.add_trace(go.Scatter(
-        x=anos_evo, y=aportada_evo,
-        mode='lines',
-        name='Aportado',
-        line=dict(color='#00FFAA', width=2, dash='dash')
-    ))
-    fig.add_trace(go.Scatter(
-        x=anos_evo, y=neta_evo,
-        mode='lines',
-        name='Neto',
-        line=dict(color='#FF00AA', width=2)
-    ))
-
-    fig.update_layout(
-        height=380,
-        margin=dict(l=10, r=10, t=40, b=10),
-        plot_bgcolor='#0A0F1F',
-        paper_bgcolor='#0A0F1F',
-        xaxis_title="Años",
-        yaxis_title="Capital (€)",
-        font=dict(color="#EAF2FF"),
-        title=dict(
-            text="<b>Evolución del capital recomendado</b>",
-            x=0.5,
-            y=0.95,
-            font=dict(size=15, color="#EAF2FF", family="Montserrat")
-        )
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ============================================
-# SIMULACIONES, INFORMES Y PANEL DE DESCARGA
-# ============================================
-
-st.markdown('<div class="srg-title">Simulaciones de ahorro</div>', unsafe_allow_html=True)
-st.caption("Todas las simulaciones usan la misma brecha y la misma rentabilidad anual asumida para mantener coherencia en el análisis.")
-
-tab1, tab2, tab3 = st.tabs(["Cuota recomendada", "Simular mi cuota", "Comparativa de cuotas"])
-
-cuota_cliente = 0.0
-capital_total_cliente = 0.0
-porc_cobertura_cliente = 0.0
-brecha_restante_cliente = brecha
-comparativa_cuotas = []
-evolucion_cliente = None
-
-# TAB 1 — ESCENARIO RECOMENDADO
-with tab1:
-    st.markdown("### Escenario recomendado")
-    st.write(
-        "Este escenario utiliza la aportación mensual recomendada para cubrir la brecha "
-        "calculada en función de tus datos y de la rentabilidad asumida."
-    )
-    st.metric("Aportación mensual recomendada", f"{aportacion_recom:,.0f} €/mes")
-    st.metric("Capital total al jubilarte", f"{capital_total_recom:,.0f} €")
-    st.metric("Capital neto (ajustado por inflación)", f"{capital_real_final_recom:,.0f} €")
-
-    with st.expander("📘 Explicación del escenario recomendado"):
-        st.markdown(f"""
-        - La brecha mensual que se quiere cubrir es de **{brecha:,.0f} €**, calculada según tu elección:  
-          **{tipo_brecha_descripcion}**.  
-        - La rentabilidad anual asumida es del **{rentabilidad_pct:,.1f}%**, aplicada de forma mensual.  
-        - La cuota recomendada se diseña para que, al llegar a la jubilación, el capital acumulado permita cubrir esa brecha durante {anos_jubilacion} años.
-
-        Este escenario es la referencia base para comparar otras cuotas y ver cómo cambian el capital y la cobertura.
-        """)
-
-# TAB 2 — SIMULAR CUOTA DEL CLIENTE
-with tab2:
-    st.markdown("### Simular mi cuota")
-
-    cuota_cliente = st.number_input(
-        "Cuota mensual que quieres aportar (€)",
-        min_value=0.0,
-        max_value=50000.0,
-        value=float(round(aportacion_recom, 0)) if aportacion_recom > 0 else 100.0,
-        step=10.0,
-        help="Introduce la cuota mensual que deseas aportar.",
-        key="cuota_cliente_input_tab2"
-    )
-
-    if cuota_cliente > 0:
-        evolucion_cliente = calcular_evolucion_mensual(
-            anos_hasta_jub, rentabilidad_pct, inflacion, cuota_cliente
-        )
-
-        capital_total_cliente = evolucion_cliente[-1].get("total", 0.0)
-        capital_real_final_cliente = evolucion_cliente[-1].get("neta", 0.0)
-
-        porc_cobertura_cliente = (
-            min(capital_total_cliente / capital_necesario, 1.0) * 100
-            if capital_necesario > 0 else 100.0
-        )
-
-        brecha_restante_cliente = brecha * (1 - porc_cobertura_cliente / 100.0)
-
-        st.metric("Capital total con tu cuota", f"{capital_total_cliente:,.0f} €")
-        st.metric("Capital neto con tu cuota", f"{capital_real_final_cliente:,.0f} €")
-        st.metric("Cobertura de la brecha", f"{porc_cobertura_cliente:,.1f} %")
-        st.metric("Brecha mensual restante", f"{brecha_restante_cliente:,.0f} €")
-
-        st.write("#### Resumen de tu cuota")
-        df_resumen_cuota = pd.DataFrame({
-            "Concepto": [
-                "Cuota mensual elegida",
-                "Capital total estimado",
-                "Capital neto ajustado por inflación",
-                "Cobertura de la brecha",
-                "Brecha mensual restante"
-            ],
-            "Valor": [
-                f"{cuota_cliente:,.0f} €",
-                f"{capital_total_cliente:,.0f} €",
-                f"{capital_real_final_cliente:,.0f} €",
-                f"{porc_cobertura_cliente:,.1f} %",
-                f"{brecha_restante_cliente:,.0f} €"
-            ]
-        })
-        st.table(df_resumen_cuota)
-
-        with st.expander("📘 Explicación de la simulación de tu cuota"):
-            st.markdown(f"""
-            Esta simulación mantiene la misma brecha (**{brecha:,.0f} €**) y la misma rentabilidad anual (**{rentabilidad_pct:,.1f}%**),
-            pero sustituye la cuota recomendada por la cuota que tú eliges.
-
-            - Si tu cuota es **mayor** que la recomendada, el capital final y la cobertura de la brecha aumentan.  
-            - Si tu cuota es **menor**, el capital final baja y la brecha restante aumenta.  
-            - La rentabilidad actúa igual que en el escenario recomendado: cuanto mayor sea, más crece tu capital con el tiempo.
-
-            Así puedes ver el impacto real de tu decisión de cuota sobre tu jubilación.
-            """)
-
-        with st.expander("Detalle de la evolución con tu cuota"):
-            evo_cli = [row for row in evolucion_cliente if "mes" in row]
-            if len(evo_cli) > 1:
-                evo_cli_sin0 = evo_cli[1:]
-                anos_cli = [fila["mes"]/12 for fila in evo_cli_sin0]
-                total_cli = [fila["total"] for fila in evo_cli_sin0]
-                aportada_cli = [fila["aportada"] for fila in evo_cli_sin0]
-                neta_cli = [fila["neta"] for fila in evo_cli_sin0]
-
-                fig_cli = go.Figure()
-                fig_cli.add_trace(go.Scatter(
-                    x=anos_cli, y=total_cli,
-                    mode='lines', name='Total acumulado',
-                    line=dict(color='#00BFFF', width=3)
-                ))
-                fig_cli.add_trace(go.Scatter(
-                    x=anos_cli, y=aportada_cli,
-                    mode='lines', name='Aportado',
-                    line=dict(color='#00FFAA', width=2, dash='dash')
-                ))
-                fig_cli.add_trace(go.Scatter(
-                    x=anos_cli, y=neta_cli,
-                    mode='lines', name='Neto ajustado inflación',
-                    line=dict(color='#FF00AA', width=2)
-                ))
-
-                fig_cli.update_layout(
-                    height=380,
-                    plot_bgcolor='#0A0F1F',
-                    paper_bgcolor='#0A0F1F',
-                    xaxis_title="Años hasta jubilación",
-                    yaxis_title="Capital (€)",
-                    font=dict(color="#EAF2FF")
-                )
-                st.plotly_chart(fig_cli, use_container_width=True)
-            else:
-                st.info("Evolución insuficiente para mostrar gráfico.")
-    else:
-        st.info("Introduce una cuota mensual mayor que 0 para simular tu propio escenario.")
-
-# TAB 3 — COMPARATIVA DE CUOTAS
-with tab3:
-    st.markdown("### Comparativa de cuotas")
-    st.write("Esta tabla compara distintos niveles de aportación y su impacto en el capital final y en la cobertura de la brecha.")
-
-    cuota_base = st.number_input(
-        "Cuota base para la comparativa (€)",
-        min_value=0.0,
-        max_value=50000.0,
-        value=float(round(aportacion_recom, 0)),
-        step=10.0,
-        key="cuota_base_input_tab3"
-    )
-
-    rango = st.number_input(
-        "Rango de variación por escenario (€)",
-        min_value=10.0,
-        max_value=1000.0,
-        value=50.0,
-        step=10.0,
-        key="rango_input_tab3"
-    )
-
-    cuotas_escenarios = [
-        max(cuota_base - rango, 0),
-        cuota_base,
-        cuota_base + rango,
-        cuota_base + 2 * rango
-    ]
-
-    comparativa_cuotas = []
-
-    for c in cuotas_escenarios:
-        if c <= 0:
-            continue
-        evo = calcular_evolucion_mensual(anos_hasta_jub, rentabilidad_pct, inflacion, c)
-        cap_tot = evo[-1].get("total", 0.0)
-        porc_cov = (
-            min(cap_tot / capital_necesario, 1.0) * 100
-            if capital_necesario > 0 else 100.0
-        )
-        brecha_rest = brecha * (1 - porc_cov / 100.0)
-        comparativa_cuotas.append({
-            "cuota": c,
-            "capital": cap_tot,
-            "porc_cobertura": porc_cov,
-            "brecha_restante": brecha_rest
-        })
-
-    if comparativa_cuotas:
-        st.write("#### Tabla comparativa de escenarios")
-        df_comp = pd.DataFrame([{
-            "Cuota mensual (€)": f"{x['cuota']:,.0f}",
-            "Capital final (€)": f"{x['capital']:,.0f}",
-            "Cobertura brecha (%)": f"{x['porc_cobertura']:,.1f}",
-            "Brecha restante (€)": f"{x['brecha_restante']:,.0f}"
-        } for x in comparativa_cuotas])
-        st.table(df_comp)
-
-        mejor = max(comparativa_cuotas, key=lambda x: x["porc_cobertura"])
-        st.markdown("#### Resumen automático")
-        st.markdown(
-            f"- Con una cuota de **{mejor['cuota']:,.0f} €/mes** cubrirías aproximadamente **{mejor['porc_cobertura']:,.1f}%** de la brecha.\n"
-            f"- La brecha mensual restante sería de **{mejor['brecha_restante']:,.0f} €**."
-        )
-
-        with st.expander("📘 Explicación de la comparativa de cuotas"):
-            st.markdown(f"""
-            La comparativa mantiene constante la brecha (**{brecha:,.0f} €**) y la rentabilidad anual (**{rentabilidad_pct:,.1f}%**),
-            y solo varía la cuota mensual.
-
-            - Escenarios con cuotas más altas generan más capital y mayor cobertura.  
-            - Escenarios con cuotas más bajas dejan más brecha sin cubrir.  
-            - Todos los escenarios se calculan con la misma lógica de rentabilidad y horizonte de jubilación.
-
-            Esto te permite elegir el equilibrio entre esfuerzo mensual y nivel de cobertura que quieres alcanzar.
-            """)
-    else:
-        st.info("Ajusta la cuota base y el rango para generar escenarios válidos.")
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ============================================
-# BLOQUE 5 — CONTEXTO PDF, INFORMES Y PANEL SRG
-# ============================================
-
-contexto_pdf = {
-    "edad_actual": edad_actual,
-    "edad_prevista_jub": edad_prevista_jub,
-    "anos_cotizados_hoy": anos_cotizados_hoy,
-    "anos_futuros": anos_futuros,
-    "tipo_jubilacion": tipo_jubilacion,
-    "pension_futura": pension_futura,
-    "coef_ajuste": coef_ajuste,
-    "objetivo_futuro": objetivo_futuro,
-    "gastos_futuros": gastos_futuros,
-    "brecha": brecha,
-    "modo_brecha": modo_brecha,
-    "tipo_brecha_descripcion": tipo_brecha_descripcion,
-    "capital_necesario": capital_necesario,
-    "aportacion_recom": aportacion_recom,
-    "rentabilidad": rentabilidad_pct,
-    "inflacion": inflacion,
-    "anos_hasta_jub": anos_hasta_jub,
-    "anos_jubilacion": anos_jubilacion,
-    "evolucion_recom": evolucion_recom,
-    "nombre_cliente": "",
-    "email_cliente": "",
-    "telefono_cliente": "",
-    "cuota_cliente": cuota_cliente,
-    "capital_total_cliente": capital_total_cliente,
-    "porc_cobertura_cliente": porc_cobertura_cliente,
-    "brecha_restante_cliente": brecha_restante_cliente,
-    "comparativa_cuotas": comparativa_cuotas,
-    "capital_total_recom": capital_total_recom,
-    "capital_real_final_recom": capital_real_final_recom,
-    "capital_real_final_cliente": 0.0,
-    "modo_ahorro_extra": False,
-    "cuota_ahorro_extra": 0.0,
-    "objetivo_ahorro_extra": "",
-    "evolucion_ahorro_extra": [],
-    "comparativa_ahorro_extra": []
-}
-
-RANGO_COMPARATIVA = 40
-
-# COMPARATIVA PARA INFORME RECOMENDADO (SI HAY BRECHA)
-if brecha > 0:
-    cuotas_recom = [
-        max(aportacion_recom - RANGO_COMPARATIVA, 0),
-        aportacion_recom,
-        aportacion_recom + RANGO_COMPARATIVA,
-        aportacion_recom + 2 * RANGO_COMPARATIVA
-    ]
-
-    comparativa_recom = []
-    for c in cuotas_recom:
-        if c <= 0:
-            continue
-        evo = calcular_evolucion_mensual(anos_hasta_jub, rentabilidad_pct, inflacion, c)
-        cap_tot = evo[-1].get("total", 0.0)
-        porc_cov = min(cap_tot / capital_necesario, 1.0) * 100 if capital_necesario > 0 else 100.0
-        brecha_rest = brecha * (1 - porc_cov / 100.0)
-        comparativa_recom.append({
-            "cuota": c,
-            "capital": cap_tot,
-            "porc_cobertura": porc_cov,
-            "brecha_restante": brecha_rest
-        })
-
-    contexto_pdf["comparativa_cuotas"] = comparativa_recom
-else:
-    contexto_pdf["comparativa_cuotas"] = []
-
-def informe_cliente(contexto, fig, tipo_informe="Cuota recomendada"):
-    fecha = datetime.date.today().strftime("%d/%m/%Y")
-    brecha_valor = contexto.get("brecha", 0.0)
-    brecha_rest = contexto.get("brecha_restante_cliente", 0.0)
-    modo_ahorro_extra = contexto.get("modo_ahorro_extra", False)
-
-    explicacion_brecha_html = ""
-    if brecha_valor == 0:
-        explicacion_brecha_html = """
-        <div style="margin-top:8px;padding:10px 14px;background:#f9fbff;
-        border-left:4px solid #0055A4;border-radius:6px;">
-            <b>💡 Tu pensión cubre tu nivel de vida previsto.</b><br>
-            No necesitas ahorrar para cubrir una brecha económica. A partir de aquí, cualquier ahorro que realices será
-            <b>capital adicional</b> para tus objetivos personales: vivienda, estudios de tus hijos, viajes, protección frente a imprevistos o legado familiar.
-        </div>
-        """
-
-    explicacion_brecha_rest_html = ""
-    if brecha_rest == 0 and brecha_valor > 0:
-        explicacion_brecha_rest_html = """
-        <div style="margin-top:8px;padding:10px 14px;background:#f9fbff;
-        border-left:4px solid #0055A4;border-radius:6px;">
-            <b>💡 Brecha mensual restante 0 €.</b><br>
-            Con tu cuota actual, la brecha económica queda completamente cubierta.
-            Tu ahorro proyectado compensa toda la diferencia entre tu pensión futura y el nivel de vida deseado.
-        </div>
-        """
-
-    pensiones_html = """
-    <div style="margin-top:12px;padding:10px 14px;background:#fff7e6;
-    border-left:4px solid #ff9900;border-radius:6px;font-size:0.9rem;">
-        <b>📌 Sobre el sistema público de pensiones:</b><br>
-        El sistema de pensiones funciona en régimen de <b>reparto</b>: las cotizaciones de los trabajadores de hoy
-        financian las pensiones de los jubilados actuales. Esto implica que tu pensión futura dependerá de factores
-        demográficos, económicos y políticos que no podemos controlar (envejecimiento de la población, nivel de empleo,
-        decisiones presupuestarias, etc.).<br><br>
-        Por eso, complementar la pensión pública con un <b>plan de ahorro privado</b> es una estrategia prudente:
-        te permite construir tu propio capital, independiente de las decisiones futuras del Estado, aprovechando el
-        interés compuesto y una planificación a largo plazo.
-    </div>
-    """
-
-    capital_total_recom = contexto.get("capital_total_recom", 0.0)
-    capital_real_final_recom = contexto.get("capital_real_final_recom", 0.0)
-    capital_total_cliente = contexto.get("capital_total_cliente", 0.0)
-    capital_real_final_cliente = contexto.get("capital_real_final_cliente", 0.0)
-
-    ahorro_extra_html = ""
-    if modo_ahorro_extra:
-        cuota_ahorro = contexto.get("cuota_ahorro_extra", 0.0)
-        objetivo_ahorro = contexto.get("objetivo_ahorro_extra", "")
-        evo_extra = contexto.get("evolucion_ahorro_extra", [])
-        cap_extra = evo_extra[-1].get("total", 0.0) if evo_extra else 0.0
-        cap_extra_neto = evo_extra[-1].get("neta", 0.0) if evo_extra else 0.0
-
-        ahorro_extra_html = f"""
-        <h2>Plan de ahorro voluntario sin brecha</h2>
-        <div class="srg-highlight-box">
-            <p><b>Objetivo de ahorro:</b> {objetivo_ahorro or 'Capital adicional para tus proyectos personales'}</p>
-            <p><b>Aportación mensual propuesta:</b> {cuota_ahorro:,.0f} €/mes</p>
-            <p><b>Capital estimado al jubilarte:</b> {cap_extra:,.0f} €</p>
-            <p><b>Capital neto estimado (ajustado por inflación):</b> {cap_extra_neto:,.0f} €</p>
-            <p>Este plan no cubre una brecha, sino que <b>crea patrimonio adicional</b> para tus objetivos:
-            vivienda, estudios de tus hijos, viajes, protección frente a imprevistos o legado familiar.</p>
-        </div>
-
-        <h2>Comparativa de cuotas de ahorro</h2>
-        <table class="srg-table">
-            <tr><th>Cuota</th><th>Capital final</th><th>Capital neto</th></tr>
-        """
-
-        for esc in contexto.get("comparativa_ahorro_extra", []):
-            ahorro_extra_html += f"<tr><td>{esc['cuota']:,.0f} €</td><td>{esc['capital']:,.0f} €</td><td>{esc['neta']:,.0f} €</td></tr>"
-
-        ahorro_extra_html += """
-        </table>
-
-        <h2>Gráfica del plan de ahorro voluntario</h2>
-        """ + fig.to_html(include_plotlyjs='cdn', full_html=False)
-
-    html = f"""
-<html>
-<head><meta charset="UTF-8"><title>Informe Cliente SRG</title>
-<style>
-body {{ font-family: 'Montserrat', sans-serif; background-color:#f4f6fb; margin:0; padding:0; }}
-.srg-container {{ max-width:950px; margin:40px auto; background:white; padding:32px 40px; border-radius:12px; }}
-.srg-table {{ width:100%; border-collapse:collapse; margin-top:10px; font-size:0.86rem; }}
-.srg-table th {{ background-color:#0055A4; color:white; padding:7px; text-align:left; }}
-.srg-table td {{ border-bottom:1px solid #e1e6f0; padding:6px 7px; }}
-.srg-highlight-box {{ border:1px solid #0055A4; background:#f9fbff; padding:12px 16px; border-radius:10px; margin-top:8px; }}
-.srg-footer {{ text-align:center; font-size:0.8rem; color:#666; margin-top:20px; }}
-</style>
-</head>
-<body>
-{marca_agua_srg()}
-
-<div class="srg-cover" style="height:160px;background:linear-gradient(135deg,#003366,#0055A4);
-color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;">
-    <h1>Informe de Proyección de Jubilación SRG</h1>
-    <p>Cliente: <b>{contexto['nombre_cliente'] or 'Cliente SRG'}</b> — Fecha: {fecha}</p>
-</div>
-
-<div class="srg-container">
-    <div style="padding:6px 10px;border-radius:6px;background:#eef6ff;color:#003366;
-    display:inline-block;font-weight:600;margin-bottom:8px;">{tipo_informe}</div>
-
-    <h2>1. Resumen ejecutivo</h2>
-    <div class="srg-highlight-box">
-        <p><b>Pensión futura estimada:</b> {contexto['pension_futura']:,.0f} €/mes</p>
-        <p><b>Objetivo mensual futuro:</b> {contexto['objetivo_futuro']:,.0f} €</p>
-        <p><b>Brecha mensual:</b> {brecha_valor:,.0f} €</p>
-        <p><b>Aportación recomendada:</b> {contexto['aportacion_recom']:,.0f} €/mes</p>
-        <p><b>Capital total recomendado:</b> {capital_total_recom:,.0f} €</p>
-        <p><b>Capital neto recomendado:</b> {capital_real_final_recom:,.0f} €</p>
-    </div>
-    {explicacion_brecha_html}
-    {pensiones_html}
-
-    <h2>2. Escenario con tu cuota</h2>
-    <div class="srg-highlight-box">
-        <p><b>Tu cuota:</b> {contexto.get('cuota_cliente', 0.0):,.0f} €/mes</p>
-        <p><b>Capital final:</b> {capital_total_cliente:,.0f} €</p>
-        <p><b>Capital neto:</b> {capital_real_final_cliente:,.0f} €</p>
-        <p><b>Brecha mensual restante:</b> {brecha_rest:,.0f} €</p>
-        {explicacion_brecha_rest_html}
-    </div>
-
-    <h2>3. Comparativa de cuotas</h2>
-    <table class="srg-table">
-        <tr><th>Cuota</th><th>Capital final</th><th>Cobertura</th><th>Brecha restante</th></tr>
-"""
-
-    for esc in contexto.get("comparativa_cuotas", []):
-        html += f"<tr><td>{esc['cuota']:,.0f} €</td><td>{esc['capital']:,.0f} €</td><td>{esc['porc_cobertura']:,.1f}%</td><td>{esc['brecha_restante']:,.0f} €</td></tr>"
-
-    html += f"""
-    </table>
-
-    <h2>4. Evolución del ahorro (brecha / cuota)</h2>
-    <table class="srg-table">
-        <tr><th>Mes/Año</th><th>Aportado</th><th>Total</th><th>Inflación</th><th>Neto</th></tr>
-        {tabla_mensual_y_anual_html(contexto.get('evolucion_recom', []), contexto.get('anos_hasta_jub', 1))}
-    </table>
-
-    <h2>5. Gráfica</h2>
-    {fig.to_html(include_plotlyjs='cdn', full_html=False)}
-
-    {ahorro_extra_html}
-
-    <div class="srg-footer">
-        Simulador SRG — Samuel Ruiz González<br>
-        Herramienta educativa y formativa para Agentes.<br>
-        © 2026 Samuel Ruiz González
-    </div>
-
-</div>
-</body>
-</html>
-"""
-    return html
-
-def informe_agente(contexto, fig, tipo_informe="Cuota recomendada"):
-    return informe_cliente(contexto, fig, tipo_informe).replace(
-        "Informe de Proyección de Jubilación SRG",
-        "Informe Técnico SRG"
-    )
-
-html_cliente_recom = informe_cliente(contexto_pdf, fig, tipo_informe="Cuota recomendada")
-html_agente_recom = informe_agente(contexto_pdf, fig, tipo_informe="Cuota recomendada")
-
-bytes_cliente_recom = html_cliente_recom.encode("utf-8")
-bytes_agente_recom = html_agente_recom.encode("utf-8")
-
-# PANEL SRG
-st.markdown('<div class="srg-title">Panel de herramientas SRG</div>', unsafe_allow_html=True)
-st.markdown('<div class="srg-box">', unsafe_allow_html=True)
-
-col_left, col_right = st.columns([0.55, 0.45])
-
-with col_left:
-    st.markdown('<div class="srg-title">Modo Agente SRG</div>', unsafe_allow_html=True)
-    modo_agente = st.checkbox("Activar Modo Agente SRG", value=False, key="modo_agente_input")
-
-    with st.expander("Datos del cliente"):
-        contexto_pdf["nombre_cliente"] = st.text_input(
-            "Nombre del cliente",
-            value=contexto_pdf.get("nombre_cliente", ""),
-            key="nombre_cliente_input"
-        )
-        contexto_pdf["email_cliente"] = st.text_input(
-            "Email del cliente",
-            value=contexto_pdf.get("email_cliente", ""),
-            key="email_cliente_input"
-        )
-        contexto_pdf["telefono_cliente"] = st.text_input(
-            "Teléfono del cliente",
-            value=contexto_pdf.get("telefono_cliente", ""),
-            key="telefono_cliente_input"
-        )
-
-        if st.button("Regenerar informe recomendado (cuota recomendada)", key="regenerar_recom_btn"):
-            html_cliente_recom = informe_cliente(contexto_pdf, fig, tipo_informe="Cuota recomendada")
-            html_agente_recom = informe_agente(contexto_pdf, fig, tipo_informe="Cuota recomendada")
-            bytes_cliente_recom = html_cliente_recom.encode("utf-8")
-            bytes_agente_recom = html_agente_recom.encode("utf-8")
-            st.success("Informes recomendados regenerados correctamente.")
-
-with col_right:
-    st.markdown('<div class="srg-title">Vista previa y descargas (Cuota recomendada)</div>', unsafe_allow_html=True)
-    st.caption("Visualiza y descarga los informes generados para la cuota recomendada.")
-
-    col_cli, col_ag = st.columns(2)
-
-    with col_cli:
-        st.markdown("**Informe Cliente SRG**")
-        with st.expander("Vista previa"):
-            components.html(html_cliente_recom, height=300, scrolling=True)
-        st.download_button(
-            label="Descargar Informe Cliente",
-            data=bytes_cliente_recom,
-            file_name=f"informe_cliente_recomendado_{datetime.date.today().isoformat()}.html",
-            mime="text/html",
-            key="download_recom_cliente"
-        )
-
-    with col_ag:
-        st.markdown("**Informe Agente SRG**")
-        with st.expander("Vista previa"):
-            components.html(html_agente_recom, height=300, scrolling=True)
-        st.download_button(
-            label="Descargar Informe Agente",
-            data=bytes_agente_recom,
-            file_name=f"informe_agente_recomendado_{datetime.date.today().isoformat()}.html",
-            mime="text/html",
-            key="download_recom_agente"
-        )
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# MÓDULO AZUL 1 — CUOTA ELEGIDA POR EL CLIENTE
 st.markdown("""
-<div style="
-    background: linear-gradient(135deg, #004080, #0055A4);
-    color: white;
-    padding: 14px 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-">
-    <h3 style="margin-bottom: 6px; font-weight: 500;">Generar informe con la cuota elegida por el cliente</h3>
-    <p style="font-size: 0.9rem; color: #e6e9ef; line-height: 1.4;">
-        Introduce la cuota mensual que el cliente desea aportar para generar su informe personalizado.
-        El resultado mostrará la evolución del ahorro y la comparativa de escenarios.
+<div style='background: linear-gradient(90deg, #0f3b73 0%, #1e5aa8 100%);
+            border-radius: 8px; padding: 10px 18px; text-align: center;
+            font-family: "Poppins", "Segoe UI", sans-serif; color: #ffffff;'>
+    <h2 style='font-size: 20px; font-weight: 600; margin-bottom: 4px; letter-spacing: 0.5px;'>
+        Simulación de ahorro personalizada SRG
+    </h2>
+    <p style='font-size: 14px; font-weight: 400; margin: 0;'>
+        Este bloque te muestra si tu pensión cubrirá tu nivel de vida y cuánto deberías ahorrar para garantizar tu tranquilidad futura.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-cuota_confirm_input = st.number_input(
-    "Cuota elegida por el cliente para generar informe (€)",
-    min_value=0.0,
-    max_value=50000.0,
-    value=float(contexto_pdf.get("cuota_cliente", aportacion_recom)),
-    step=1.0,
-    key="cuota_confirm_input_panel"
-)
 
-if st.button("Confirmar cuota elegida y generar informe", key="confirmar_cuota_btn"):
-    cuota_cliente = cuota_confirm_input
+# ============================================================
+# 🟦 PANEL ALINEADO SRG — RESUMEN DE TU SITUACIÓN ACTUAL
+# ============================================================
 
-    evolucion_cliente = calcular_evolucion_mensual(
-        anos_hasta_jub, rentabilidad_pct, inflacion, cuota_cliente
-    )
-    capital_total_cliente = evolucion_cliente[-1].get("total", 0.0)
-    capital_real_final_cliente = evolucion_cliente[-1].get("neta", 0.0)
-    porc_cobertura_cliente = (
-        min(capital_total_cliente / capital_necesario, 1.0) * 100
-        if capital_necesario > 0 else 100.0
-    )
-    brecha_restante_cliente = brecha * (1 - porc_cobertura_cliente / 100.0)
+fila1_col1, fila1_col2, fila1_col3 = st.columns(3)
 
-    cuotas_cli = [
-        max(cuota_cliente - RANGO_COMPARATIVA, 0),
-        cuota_cliente,
-        cuota_cliente + RANGO_COMPARATIVA,
-        cuota_cliente + 2 * RANGO_COMPARATIVA
-    ]
+with fila1_col1:
+    st.markdown("### 💰 Pensión futura estimada")
+    st.markdown(f"<h2 style='color:#00cc66; margin-top:-10px;'>{pension_futura:,.0f} €</h2>", unsafe_allow_html=True)
 
-    comparativa_cli = []
-    for c in cuotas_cli:
-        if c <= 0:
-            continue
-        evo = calcular_evolucion_mensual(anos_hasta_jub, rentabilidad_pct, inflacion, c)
-        cap_tot = evo[-1].get("total", 0.0)
-        porc_cov = (
-            min(cap_tot / capital_necesario, 1.0) * 100
-            if capital_necesario > 0 else 100.0
-        )
-        brecha_rest = brecha * (1 - porc_cov / 100.0)
-        comparativa_cli.append({
-            "cuota": c,
-            "capital": cap_tot,
-            "porc_cobertura": porc_cov,
-            "brecha_restante": brecha_rest
-        })
+with fila1_col2:
+    st.markdown("### 🏠 Nivel de vida futuro")
+    st.markdown(f"<h2 style='color:#00cc66; margin-top:-10px;'>{nivel_vida_futuro:,.0f} €</h2>", unsafe_allow_html=True)
 
-    contexto_cli = contexto_pdf.copy()
-    contexto_cli.update({
-        "cuota_cliente": cuota_cliente,
-        "capital_total_cliente": capital_total_cliente,
-        "capital_real_final_cliente": capital_real_final_cliente,
-        "porc_cobertura_cliente": porc_cobertura_cliente,
-        "brecha_restante_cliente": brecha_restante_cliente,
-        "evolucion_recom": evolucion_cliente,
-        "comparativa_cuotas": comparativa_cli,
-        "modo_ahorro_extra": False
-    })
+with fila1_col3:
+    st.markdown("### 📉 Brecha mensual")
+    st.markdown(f"<h2 style='color:#00cc66; margin-top:-10px;'>{brecha:,.0f} €</h2>", unsafe_allow_html=True)
 
-    html_cli = informe_cliente(contexto_cli, fig, tipo_informe="Cuota elegida por el cliente")
-    html_ag = informe_agente(contexto_cli, fig, tipo_informe="Cuota elegida por el cliente")
 
-    bytes_cli_elegido = html_cli.encode("utf-8")
-    bytes_ag_elegido = html_ag.encode("utf-8")
+fila2_col1, fila2_col2, fila2_col3 = st.columns(3)
 
-    st.download_button(
-        "Descargar Informe Cliente (Cuota elegida)",
-        bytes_cli_elegido,
-        file_name=f"informe_cliente_cuota_elegida_{datetime.date.today().isoformat()}.html",
-        mime="text/html",
-        key="download_cli_elegida"
-    )
+with fila2_col1:
+    st.markdown("### ⏳ Años hasta tu jubilación")
+    st.markdown(f"<h2 style='color:#00cc66; margin-top:-10px;'>{anos_hasta_jub}</h2>", unsafe_allow_html=True)
 
-    st.download_button(
-        "Descargar Informe Agente (Cuota elegida)",
-        bytes_ag_elegido,
-        file_name=f"informe_agente_cuota_elegida_{datetime.date.today().isoformat()}.html",
-        mime="text/html",
-        key="download_ag_elegida"
-    )
+with fila2_col2:
+    st.markdown("### 📈 Inflación anual estimada")
+    st.markdown(f"<h2 style='color:#00cc66; margin-top:-10px;'>{inflacion:.1f} %</h2>", unsafe_allow_html=True)
 
-    st.success("Informes generados para la cuota elegida.")
+capital_objetivo = brecha * 12 * anos_hasta_jub
+with fila2_col3:
+    st.markdown("### 🎯 Capital objetivo aproximado")
+    st.markdown(f"<h2 style='color:#00cc66; margin-top:-10px;'>{capital_objetivo:,.0f} €</h2>", unsafe_allow_html=True)
 
-# MÓDULO AZUL 2 — PLAN DE AHORRO SIN BRECHA
-if brecha == 0:
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #003366, #0055A4);
-        color: white;
-        padding: 25px 30px;
-        border-radius: 12px;
-        margin-top: 35px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    ">
-        <h2 style="margin-bottom: 10px;">Plan de ahorro recomendado (sin brecha económica)</h2>
-        <p style="font-size: 0.95rem; color: #e6e9ef;">
-            Tu pensión futura cubre tu nivel de vida previsto.
-            Este módulo te permite construir capital adicional para tus objetivos personales,
-            aprovechando el interés compuesto y la rentabilidad anual esperada.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("<hr style='border:1px solid #1e3a5f; margin-top:15px; margin-bottom:15px;'>", unsafe_allow_html=True)
 
-    objetivo_ahorro_extra = st.text_input(
-        "Objetivo de tu plan de ahorro (ej. vivienda, estudios hijos, viaje, legado)",
-        value=contexto_pdf.get("objetivo_ahorro_extra", ""),
-        key="objetivo_ahorro_extra_input"
-    )
 
-    cuota_ahorro_extra = st.number_input(
-        "Cuota mensual de ahorro voluntario (€)",
-        min_value=0.0,
-        max_value=50000.0,
-        value=float(contexto_pdf.get("cuota_ahorro_extra", 100.0)),
-        step=10.0,
-        key="cuota_ahorro_extra_input"
-    )
-
-    if st.button("Simular plan de ahorro voluntario", key="simular_ahorro_extra_btn"):
-        evolucion_ahorro_extra = calcular_evolucion_mensual(
-            anos_hasta_jub, rentabilidad_pct, inflacion, cuota_ahorro_extra
-        )
-
-        capital_extra = evolucion_ahorro_extra[-1].get("total", 0.0)
-        capital_extra_neto = evolucion_ahorro_extra[-1].get("neta", 0.0)
-
-        cuotas_extra = [
-            max(cuota_ahorro_extra - RANGO_COMPARATIVA, 0),
-            cuota_ahorro_extra,
-            cuota_ahorro_extra + RANGO_COMPARATIVA,
-            cuota_ahorro_extra + 2 * RANGO_COMPARATIVA
-        ]
-
-        comparativa_ahorro_extra = []
-        for c in cuotas_extra:
-            if c <= 0:
-                continue
-            evo = calcular_evolucion_mensual(anos_hasta_jub, rentabilidad_pct, inflacion, c)
-            cap_tot = evo[-1].get("total", 0.0)
-            cap_neta = evo[-1].get("neta", 0.0)
-            comparativa_ahorro_extra.append({
-                "cuota": c,
-                "capital": cap_tot,
-                "neta": cap_neta
-            })
-
-        contexto_ahorro = contexto_pdf.copy()
-        contexto_ahorro.update({
-            "modo_ahorro_extra": True,
-            "cuota_ahorro_extra": cuota_ahorro_extra,
-            "objetivo_ahorro_extra": objetivo_ahorro_extra,
-            "evolucion_ahorro_extra": evolucion_ahorro_extra,
-            "comparativa_ahorro_extra": comparativa_ahorro_extra,
-            "cuota_cliente": cuota_ahorro_extra,
-            "capital_total_cliente": capital_extra,
-            "capital_real_final_cliente": capital_extra_neto,
-            "brecha_restante_cliente": 0.0,
-            "comparativa_cuotas": [],
-            "evolucion_recom": evolucion_ahorro_extra
-        })
-
-        html_cli_ahorro = informe_cliente(
-            contexto_ahorro, fig, tipo_informe="Plan de ahorro recomendado sin brecha"
-        )
-        html_ag_ahorro = informe_agente(
-            contexto_ahorro, fig, tipo_informe="Plan de ahorro recomendado sin brecha"
-        )
-
-        bytes_cli_ahorro = html_cli_ahorro.encode("utf-8")
-        bytes_ag_ahorro = html_ag_ahorro.encode("utf-8")
-
-        st.download_button(
-            "Descargar Informe Cliente (Plan de ahorro)",
-            bytes_cli_ahorro,
-            file_name=f"informe_cliente_ahorro_extra_{datetime.date.today().isoformat()}.html",
-            mime="text/html",
-            key="download_cli_ahorro_extra"
-        )
-
-        st.download_button(
-            "Descargar Informe Agente (Plan de ahorro)",
-            bytes_ag_ahorro,
-            file_name=f"informe_agente_ahorro_extra_{datetime.date.today().isoformat()}.html",
-            mime="text/html",
-            key="download_ag_ahorro_extra"
-        )
-
-        st.success("Plan de ahorro voluntario simulado y listo para descargar en informe.")
-
-# FOOTER SRG
-footer_html = """
-<div class="srg-footer">
-    Simulador SRG — Samuel Ruiz González<br>
-    Herramienta educativa y formativa para Agentes.<br>
-    © 2026 Samuel Ruiz González
-</div>
-"""
-st.markdown(footer_html, unsafe_allow_html=True)
-
-# ============================================
-# BLOQUE 6 — DISEÑO FUTURISTA SRG (CSS FINAL)
-# ============================================
+# ============================================================
+# 🟦 3. PARÁMETROS DEL PLAN — INTELIGENTE SRG
+# ============================================================
 
 st.markdown("""
-<style>
-/* ============================================================
-   FIX DEFINITIVO SRG — TOOLTIP, HELP, EXPLICACIONES, INPUT
-   ============================================================ */
-
-/* HELP TEXT (como el de “Ordinaria”) */
-div[data-testid="stHelp"] {
-    background-color: #0A1A2F !important;
-    color: #EAF2FF !important;
-    border: 1px solid #00BFFF !important;
-    padding: 10px 14px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4) !important;
-}
-
-/* TOOLTIP DEL SIGNO DE INTERROGACIÓN */
-div[data-baseweb="tooltip"] {
-    background-color: #0A1A2F !important;
-    color: #EAF2FF !important;
-    border: 1px solid #00BFFF !important;
-    padding: 8px 12px !important;
-    border-radius: 6px !important;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4) !important;
-}
-
-/* TEXTO INTERNO DEL TOOLTIP */
-div[data-baseweb="tooltip"] * {
-    color: #EAF2FF !important;
-}
-
-/* EXPLICACIÓN DE BRECHA — fondo oscuro */
-div[style*="background:#f9fbff"] {
-    background-color: #0A1A2F !important;
-    color: #EAF2FF !important;
-}
-
-/* INPUT DE CUOTA — limitar ancho */
-div[data-testid="stNumberInput"] {
-    max-width: 600px !important;
-    margin: 0 auto !important;
-}
-
-/* FONDO GENERAL */
-html, body, [class*="css"], div[data-testid="stAppViewContainer"] {
-    background-color: #05070D !important;
-    background-image: none !important;
-    color: #F5F9FF !important;
-    font-family: 'Inter', 'Montserrat', sans-serif !important;
-}
-
-/* TEXTOS */
-label, .stMarkdown, .stCaption, p, span {
-    color: #EAF2FF !important;
-}
-
-/* INPUTS FUTURISTAS */
-input[type="number"], input[type="text"], select, textarea {
-    background-color: #0C1426 !important;
-    color: #F5F9FF !important;
-    border: 1px solid #00BFFF !important;
-    border-radius: 6px !important;
-    box-shadow: inset 0 0 12px rgba(0,191,255,0.4), 0 0 10px rgba(0,191,255,0.3) !important;
-}
-input:focus, select:focus, textarea:focus {
-    outline: none !important;
-    box-shadow: 0 0 22px rgba(0,191,255,0.8) !important;
-}
-
-/* MÉTRICAS */
-[data-testid="stMetricValue"], [data-testid="stMetricLabel"], div[data-testid="stMarkdownContainer"] strong {
-    color: #00E0FF !important;
-    text-shadow: 0 0 8px rgba(0,191,255,0.6) !important;
-    font-weight: 600 !important;
-}
-
-/* MENSAJES POSITIVO / NEGATIVO */
-.msg-ok-srg {
-    background-color: #1E6FFF !important;
-    border: 1px solid #4DA3FF !important;
-    color: #FFFFFF !important;
-    padding: 12px 16px !important;
-    border-radius: 10px !important;
-    margin-top: 10px !important;
-    font-weight: 600 !important;
-    text-shadow: none !important;
-}
-            /* ============================================================
-   FIX DEFINITIVO — TOOLTIP, FONDO BLANCO Y INPUT DE CUOTA
-   ============================================================ */
-
-/* TOOLTIP — fondo oscuro estable incluso al perder hover */
-[data-testid="stTooltipHoverTarget"] div {
-    background-color: #0A1A2F !important;
-    color: #EAF2FF !important;
-    border: 1px solid #00BFFF !important;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4);
-    padding: 6px 10px !important;
-    border-radius: 6px !important;
-    transition: background-color 0.3s ease-in-out;
-}
-
-/* Evitar que se ponga blanco al salir el ratón */
-[data-testid="stTooltipHoverTarget"] * {
-    color: #EAF2FF !important;
-    background-color: transparent !important;
-    opacity: 1 !important;
-}
-
-/* SELECTBOX — mantener estilo azul degradado */
-div[data-testid="stSelectbox"] div[role="button"] {
-    background: linear-gradient(135deg, #003366, #0055A4) !important;
-    color: #FFFFFF !important;
-    border: 1px solid #00BFFF !important;
-    border-radius: 6px !important;
-    box-shadow: 0 0 10px rgba(0,191,255,0.3) !important;
-}
-
-/* INPUT DE CUOTA — limitar ancho máximo y centrar */
-input[id*="cuota_confirm_input_panel"] {
-    max-width: 600px !important;
-    width: 100% !important;
-    margin: 0 auto !important;
-    display: block !important;
-}
-
-.msg-error-srg {
-    background-color: #FFCCCC !important;
-    border: 1px solid #FF6666 !important;
-    color: #660000 !important;
-    padding: 12px 16px !important;
-    border-radius: 10px !important;
-    margin-top: 10px !important;
-    font-weight: 700 !important;
-    text-shadow: none !important;
-}
-
-/* GRÁFICAS */
-.stPlotlyChart {
-    background-color: #0A0F1F !important;
-    border-radius: 12px !important;
-    box-shadow: 0 0 20px rgba(0,191,255,0.35) !important;
-}
-.js-plotly-plot .plotly .bg {
-    fill: #0A0F1F !important;
-}
-.js-plotly-plot .plotly .grid {
-    stroke: rgba(0,191,255,0.25) !important;
-}
-.js-plotly-plot .plotly .axis text,
-.js-plotly-plot .plotly .legend text {
-    fill: #EAF2FF !important;
-}
-
-/* TOOLTIP FUTURISTA */
-[data-testid="stTooltipIcon"] svg {
-    fill: #00BFFF !important;
-    filter: drop-shadow(0 0 6px rgba(0,191,255,0.6));
-}
-div[data-testid="stTooltipHoverTarget"] div,
-div[data-testid="stTooltipHoverTarget"]:hover div {
-    background-color: #0A1A2F !important;
-    color: #EAF2FF !important;
-    border: 1px solid #00BFFF !important;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4);
-    padding: 6px 10px !important;
-    border-radius: 6px !important;
-}
-div[data-testid="stTooltipHoverTarget"] * {
-    color: #EAF2FF !important;
-    text-shadow: none !important;
-    opacity: 1 !important;
-}
-.msg-green-srg {
-    background-color: #0F4D0F !important;
-    border: 1px solid #33CC33 !important;
-    color: #CCFFCC !important;
-    padding: 12px 16px !important;
-    border-radius: 10px !important;
-    margin-top: 10px !important;
-    font-weight: 600 !important;
-}
-/* EXPANDERS — FONDO OSCURO ESTABLE */
-div[data-testid="stExpander"] {
-    background-color: #0A0F1F !important;
-    border: 1px solid #00BFFF !important;
-    border-radius: 8px !important;
-    color: #EAF2FF !important;
-}
-
-/* TÍTULO DEL EXPANDER */
-div[data-testid="stExpander"] button {
-    background-color: #0A0F1F !important;
-    color: #EAF2FF !important;
-    border-radius: 8px !important;
-}
-
-/* TEXTO INTERNO DEL EXPANDER */
-div[data-testid="stExpander"] * {
-    color: #EAF2FF !important;
-}
-
-/* EVITAR CAMBIO DE COLOR AL HACER HOVER */
-div[data-testid="stExpander"]:hover,
-div[data-testid="stExpander"] button:hover {
-    background-color: #0A0F1F !important;
-    color: #EAF2FF !important;
-}
-/* BOTONES FUTURISTAS */
-button[kind="primary"],
-button {
-    background-color: #003366 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #00BFFF !important;
-    border-radius: 6px !important;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4) !important;
-}
-
-/* HOVER */
-button:hover {
-    background-color: #0055A4 !important;
-    color: #FFFFFF !important;
-}
-
-/* EVITAR QUE SE PONGAN BLANCOS AL PERDER FOCUS */
-button:focus:not(:active) {
-    background-color: #003366 !important;
-    color: #FFFFFF !important;
-}
-/* ALINEAR SELECTBOX "TIPO PREVISTO" CON LOS INPUTS */
-div[data-testid="stSelectbox"] {
-    margin-top: -6px !important;   /* sube el selectbox */
-    vertical-align: middle !important;
-}
-
-/* Ajuste adicional para mantener coherencia con los inputs */
-div[data-testid="stSelectbox"] label {
-    margin-bottom: 4px !important;
-    color: #EAF2FF !important;
-}
-
-</style>
+<div class='srg-box'>
+    <h4>Parámetros del plan de ahorro</h4>
+    <p>El simulador SRG adapta automáticamente tu plan según exista brecha o no.</p>
+</div>
 """, unsafe_allow_html=True)
 
+rentabilidad_base = 4.0  # valor por defecto si aún no se ha definido
+inflacion_base = inflacion
+
+# ============================================================
+# 🟦 CASO 1 — HAY BRECHA → calcular cuota recomendada
+# ============================================================
+
+if brecha > 0:
+
+    st.error("Tu pensión no cubre tu nivel de vida futuro.")
+    st.info("💡 Vamos a calcular la cuota mensual recomendada para cubrir tu brecha.")
+
+    colA, colB = st.columns(2)
+    with colA:
+        aportacion_inicial = st.number_input("Aportación inicial (€)", min_value=0.0, value=0.0, step=100.0)
+    with colB:
+        rentabilidad = st.number_input("Rentabilidad media anual (%)", min_value=0.0, value=rentabilidad_base, step=0.1)
+        inflacion_media = st.number_input("Inflación media anual (%)", min_value=0.0, value=inflacion_base, step=0.1)
+
+else:
+    # ============================================================
+    # 🟦 CASO 2 — NO HAY BRECHA → modo libre
+    # ============================================================
+    st.success("Tu pensión cubrirá tu nivel de vida. No aparece brecha mensual.")
+    st.info("Puedes diseñar un plan de ahorro voluntario para tus objetivos personales.")
+
+    colA, colB = st.columns(2)
+    with colA:
+        aportacion_inicial = st.number_input("Aportación inicial (€)", min_value=0.0, value=1000.0, step=100.0)
+        rentabilidad = st.number_input("Rentabilidad media anual (%)", min_value=0.0, value=rentabilidad_base, step=0.1)
+    with colB:
+        inflacion_media = st.number_input("Inflación media anual (%)", min_value=0.0, value=inflacion_base, step=0.1)
+
+# ============================================================
+# 🔥 SINCRONIZACIÓN COMPLETA DE CUOTAS SRG
+# ============================================================
+
+r_mensual = rentabilidad / 100 / 12
+n_meses = anos_hasta_jub * 12
+capital_objetivo = brecha * 12 * anos_hasta_jub
+
+# ============================================================
+# 🟦 Cuota recomendada y entrada manual
+# ============================================================
+
+if brecha > 0:
+    cuota_recomendada = (
+        (capital_objetivo - aportacion_inicial * (1 + r_mensual) ** n_meses) * r_mensual
+    ) / ((1 + r_mensual) ** n_meses - 1)
+
+    st.info(f"💡 Cuota mensual recomendada para cubrir tu brecha: **{cuota_recomendada:,.0f} €**")
+    st.caption("La cuota recomendada es la aportación teórica necesaria para cubrir tu brecha mensual según tus datos actuales.")
+
+else:
+    cuota_recomendada = 150.0
+
+cuota_mensual = st.number_input(
+    "Cuota mensual (€)",
+    min_value=0.0,
+    value=float(cuota_recomendada),
+    step=50.0,
+    key="cuota_mensual_srg"
+)
+
+if cuota_mensual < 80:
+    st.warning("⚠️ En los productos Ocaso, la cuota mínima permitida es de **80 €**.")
+    cuota_mensual = 80.0
+# ============================================================
+# 🟦 Función de simulación
+# ============================================================
+
+def simular_plan(cuota, aportacion_extra, rentabilidad_anual, inflacion_anual):
+    r = rentabilidad_anual / 100 / 12
+    inf_mensual = inflacion_anual / 100 / 12
+    n = anos_hasta_jub * 12
+
+    capital = aportacion_extra
+    historial = []
+
+    for mes in range(1, n + 1):
+        capital_inicio = capital
+        intereses = capital * r
+        capital += intereses + cuota
+
+        factor_inflacion = (1 + inf_mensual) ** mes
+        capital_ajustado = capital / factor_inflacion
+
+        historial.append({
+            "Mes": mes,
+            "Aportación mensual (€)": cuota,
+            "Capital inicio (€)": capital_inicio,
+            "Intereses ganados (€)": intereses,
+            "Capital final (€)": capital,
+            "Capital ajustado por inflación (€)": capital_ajustado
+        })
+
+    df = pd.DataFrame(historial)
+    total_aportado = aportacion_extra + cuota * n
+    beneficio_intereses = capital - total_aportado
+    capital_ajustado_final = df["Capital ajustado por inflación (€)"].iloc[-1]
+    rentabilidad_neta = (capital / total_aportado - 1) * 100 if total_aportado > 0 else 0
+
+    return df, capital, total_aportado, beneficio_intereses, capital_ajustado_final, rentabilidad_neta
+# ============================================================
+# 🟦 Ajuste automático (referencia)
+# ============================================================
+
+def ajustar_cuota(capital_objetivo, aportacion_inicial, rentabilidad_anual, inflacion_anual):
+    r_mensual_local = rentabilidad_anual / 100 / 12
+    n_meses_local = anos_hasta_jub * 12
+
+    cuota = (
+        (capital_objetivo - aportacion_inicial * (1 + r_mensual_local) ** n_meses_local) * r_mensual_local
+    ) / ((1 + r_mensual_local) ** n_meses_local - 1)
+
+    paso = 10.0
+    for _ in range(500):
+        df_tmp, _, _, _, capital_ajustado_final_tmp, _ = simular_plan(
+            cuota, aportacion_inicial, rentabilidad_anual, inflacion_anual
+        )
+        diferencia = capital_objetivo - capital_ajustado_final_tmp
+        if abs(diferencia) < 50:
+            break
+        cuota += paso if diferencia > 0 else -paso
+
+    return cuota
+
+cuota_ajustada = ajustar_cuota(capital_objetivo, aportacion_inicial, rentabilidad, inflacion_media)
+
+if cuota_ajustada < 80:
+    cuota_ajustada = 80.0
+
+st.info(f"🔧 Cuota ajustada automáticamente (referencia): **{cuota_ajustada:,.0f} €**")
+st.caption("La cuota ajustada se calcula iterando el modelo SRG para alcanzar exactamente el capital objetivo, considerando inflación y rentabilidad.")
+# ============================================================
+# 🟦 Cuota real (la que manda)
+# ============================================================
+
+cuota_real = cuota_mensual
+
+# ============================================================
+# 🔄 Recalcular automáticamente al cambiar la cuota
+# ============================================================
+
+def actualizar_simulacion():
+    df, capital_final, total_aportado, beneficio_intereses, capital_ajustado_final, rentabilidad_neta = simular_plan(
+        cuota_real, aportacion_inicial, rentabilidad, inflacion_media
+    )
+    st.session_state["df"] = df
+    st.session_state["capital_final"] = capital_final
+    st.session_state["total_aportado"] = total_aportado
+    st.session_state["beneficio_intereses"] = beneficio_intereses
+    st.session_state["capital_ajustado_final"] = capital_ajustado_final
+    st.session_state["rentabilidad_neta"] = rentabilidad_neta
+
+actualizar_simulacion()
+
+df = st.session_state["df"]
+capital_final = st.session_state["capital_final"]
+total_aportado = st.session_state["total_aportado"]
+beneficio_intereses = st.session_state["beneficio_intereses"]
+capital_ajustado_final = st.session_state["capital_ajustado_final"]
+rentabilidad_neta = st.session_state["rentabilidad_neta"]
+# ============================================================
+# 🟩 Mensaje de cumplimiento del objetivo
+# ============================================================
+
+if capital_final >= capital_objetivo:
+    st.success(
+        f"🎯 Con una cuota de {cuota_real:,.0f} €, tu capital estimado ({capital_final:,.0f} €) "
+        f"supera el capital objetivo ({capital_objetivo:,.0f} €). ¡Cumples tu objetivo de ahorro!"
+    )
+elif capital_final >= capital_objetivo * 0.95:
+    st.info(
+        f"✅ Estás muy cerca de cumplir tu objetivo: tu capital estimado ({capital_final:,.0f} €) "
+        f"alcanza el 95 % del capital objetivo ({capital_objetivo:,.0f} €)."
+    )
+else:
+    st.warning(
+        f"⚠️ Con esta cuota ({cuota_real:,.0f} €), tu capital estimado ({capital_final:,.0f} €) "
+        f"no llega al objetivo ({capital_objetivo:,.0f} €). Considera aumentar tu aportación."
+    )
+# ============================================================
+# 🟦 Gráfico SRG
+# ============================================================
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=df["Mes"], y=df["Capital final (€)"], mode="lines",
+                         name="Ahorro con crecimiento", line=dict(color="green", width=3)))
+fig.add_trace(go.Scatter(x=df["Mes"], y=aportacion_inicial + df["Aportación mensual (€)"].cumsum(),
+                         mode="lines", name="Ahorro aportado", line=dict(color="blue", width=2)))
+fig.add_trace(go.Scatter(x=df["Mes"], y=df["Capital ajustado por inflación (€)"],
+                         mode="lines", name="Ahorro ajustado por inflación",
+                         line=dict(color="red", dash="dot", width=2)))
+
+fig.update_layout(height=450, template="plotly_white")
+st.plotly_chart(fig, use_container_width=True)
+# ============================================================
+# 🟨 Tabla mensual SRG con estilo visual igual al informe (dentro de expander)
+# ============================================================
+
+# Convertimos el DataFrame a HTML con formato y estilo SRG
+tabla_html = df.round(2).to_html(index=False)
+
+# Aplicamos el estilo visual SRG (fondo amarillo + encabezado azul + borde dorado + bordes redondeados)
+tabla_html = f"""
+<style>
+    .tabla-srg {{
+        width: 100%;
+        border-collapse: separate; /* IMPORTANTE para bordes redondeados */
+        border-spacing: 0;         /* elimina huecos entre celdas */
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 14px;
+        margin-top: 10px;
+        background-color: #fff8dc; /* Fondo amarillo claro */
+        border: 2px solid #d4af37; /* Borde dorado */
+        border-radius: 12px;       /* Bordes redondeados */
+        overflow: hidden;          /* Mantiene redondeo en toda la tabla */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }}
+
+    .tabla-srg th {{
+        background-color: #0055A4; /* Azul SRG */
+        color: white;
+        text-align: center;
+        padding: 10px;
+        border: 1px solid #ccc;
+        font-weight: 600;
+    }}
+
+    .tabla-srg td {{
+        text-align: right;
+        padding: 8px 10px;
+        border: 1px solid #ccc;    /* Líneas internas visibles */
+        color: #0A1A2F;
+        background-color: #fff8dc; /* Fondo uniforme */
+    }}
+
+    .tabla-srg tr {{
+        background-color: #fff8dc; /* Sin alternancia */
+    }}
+</style>
+
+<table class="tabla-srg">
+{tabla_html.split('<table border="1" class="dataframe">')[1].split('</table>')[0]}
+</table>
+"""
+
+# Mostramos la tabla dentro de un expander para evitar scroll infinito
+with st.expander("Ver detalle mes a mes del plan de ahorro"):
+    st.markdown(tabla_html, unsafe_allow_html=True)
+
+# ============================================================
+# 🟦 Datos del cliente para informes
+# ============================================================
+
+st.markdown("""
+<div class='srg-box'>
+    <h4>Datos del cliente</h4>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+with col1:
+    nombre_cliente = st.text_input("Nombre del cliente", value="Cliente SRG")
+    apellido_cliente = st.text_input("Apellidos", value="")
+with col2:
+    telefono_cliente = st.text_input("Teléfono", value="")
+    email_cliente = st.text_input("Email", value="")
+
+fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
+# ============================================================
+# 🟦 Explicaciones SRG para informes
+# ============================================================
+
+explicaciones = {
+    "exp_base_reguladora": "La base reguladora es la media de tus bases de cotización...",
+    "exp_pension": "Tu pensión futura se calcula aplicando el porcentaje...",
+    "exp_nivel_vida": "Tu nivel de vida futuro se obtiene inflando tus gastos...",
+    "exp_brecha": "La brecha es la diferencia entre pensión futura y nivel de vida...",
+    "exp_capital_objetivo": "El capital objetivo es la brecha mensual multiplicada por años...",
+    "exp_plan_ahorro": "El plan SRG calcula automáticamente la cuota necesaria...",
+    "exp_grafico": "La gráfica muestra ahorro aportado, crecimiento e inflación...",
+    "exp_tabla": "La tabla evolutiva muestra aportación, intereses y capital..."
+}
+# ============================================================
+# 🟦 Contexto para informes
+# ============================================================
+
+contexto_pdf = {
+    "nombre_cliente": f"{nombre_cliente} {apellido_cliente}",
+    "telefono": telefono_cliente,
+    "email": email_cliente,
+    "fecha": fecha_actual,
+    "pension_futura": pension_futura,
+    "nivel_vida": nivel_vida_futuro,
+    "brecha": brecha,
+    "cuota_recomendada": cuota_real,
+    "capital_final": capital_final,
+    "capital_objetivo": capital_objetivo,
+    "capital_ajustado_final": capital_ajustado_final,
+    "rentabilidad_neta": rentabilidad_neta,
+    "rentabilidad": rentabilidad,
+    "inflacion_media": inflacion_media,
+    "tabla_evolucion": df.round(2).to_html(index=False),
+}
+contexto_pdf.update(explicaciones)
+# ============================================================
+# 🟦 Función Informe Cliente SRG — lenguaje cotidiano
+# ============================================================
+
+def informe_cliente(contexto, fig):
+    grafica_html = fig.to_html(include_plotlyjs='cdn') if fig else ""
+
+    return f"""
+    <html>
+    <head>
+        <meta charset="UTF-8">
+
+        <style>
+            body {{
+                font-family:'Segoe UI', Arial;
+                background-color:#f7f9fc;
+                color:#0A1A2F;
+                margin:0;
+            }}
+
+            .bloque {{
+                border:1px solid #0055A4;
+                border-radius:8px;
+                padding:20px;
+                background-color:white;
+                margin-top:25px;
+            }}
+
+            /* 🟨 Recuadro amarillo elegante */
+            .bloque-amarillo {{
+                border: 1px solid #d4af37;
+                background-color: #fff8dc;
+                border-radius: 10px;
+                padding: 20px;
+                margin-top: 25px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            }}
+
+            .bloque-amarillo h2 {{
+                color: #0A1A2F;
+                font-size: 20px;
+                font-weight: 700;
+                margin-bottom: 15px;
+            }}
+
+            .bloque-amarillo p {{
+                color: #0A1A2F;
+                font-size: 14px;
+                line-height: 1.5;
+                margin-bottom: 10px;
+            }}
+
+            .bloque-amarillo b {{
+                color: #0A1A2F;
+            }}
+
+            table {{
+                width:100%;
+                border-collapse:collapse;
+                font-size:14px;
+            }}
+
+            th, td {{
+                border:1px solid #ccc;
+                padding:6px 8px;
+                text-align:right;
+            }}
+
+            th {{
+                background-color:#0055A4;
+                color:white;
+            }}
+
+            tr:nth-child(even) {{
+                background-color:#f2f4f8;
+            }}
+        </style>
+    </head>
+
+    <body>
+
+        <div style="background: linear-gradient(180deg, #0055A4 0%, #003366 100%);
+                    color:white; padding:25px; text-align:center;">
+            <h1>Informe Cliente SRG</h1>
+            <p>Cliente: <b>{contexto['nombre_cliente']}</b> — Tel: {contexto['telefono']} — Email: {contexto['email']}</p>
+            <p>Fecha: {contexto['fecha']}</p>
+        </div>
+
+        <div style="padding:30px;">
+
+            <div class="bloque-amarillo">
+                <h2>1. Resumen de tu situación</h2>
+                <p>Pensión futura estimada: <b>{contexto['pension_futura']:,.0f} €</b></p>
+                <p>Nivel de vida futuro: <b>{contexto['nivel_vida']:,.0f} €</b></p>
+                <p>Brecha mensual: <b>{contexto['brecha']:,.0f} €</b></p>
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>2. Recomendación SRG</h2>
+                <p>Cuota mensual aplicada: <b>{contexto['cuota_recomendada']:,.0f} €</b></p>
+                <p>Capital estimado al jubilarte: <b>{contexto['capital_final']:,.0f} €</b></p>
+                <p>Capital objetivo: <b>{contexto['capital_objetivo']:,.0f} €</b></p>
+                <p>Capital ajustado por inflación: <b>{contexto['capital_ajustado_final']:,.0f} €</b></p>
+                <p>Rentabilidad neta del plan: <b>{contexto['rentabilidad_neta']:.2f} %</b></p>
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>3. Evolución de tu ahorro</h2>
+                {contexto['tabla_evolucion']}
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>4. Gráfica del plan</h2>
+                {grafica_html}
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>5. ¿Cómo hemos calculado tu resultado?</h2>
+
+                <p><b>1. Tu pensión futura:</b><br>
+                Hemos utilizado tu base reguladora estimada y el porcentaje que te corresponde según tus años cotizados.  
+                Resultado: <b>{contexto['pension_futura']:,.0f} €</b> al mes.</p>
+
+                <p><b>2. Tu nivel de vida futuro:</b><br>
+                Partimos de tu gasto mensual actual y lo actualizamos con la inflación media anual del periodo.  
+                Resultado: <b>{contexto['nivel_vida']:,.0f} €</b> al mes.</p>
+
+                <p><b>3. Tu brecha mensual:</b><br>
+                Diferencia entre tu pensión futura y tu nivel de vida futuro.  
+                Resultado: <b>{contexto['brecha']:,.0f} €</b> al mes.</p>
+
+                <p><b>4. Capital necesario para cubrir esa brecha:</b><br>
+                Brecha × 12 meses × años hasta la jubilación.  
+                Resultado: <b>{contexto['capital_objetivo']:,.0f} €</b>.</p>
+
+                <p><b>5. Cuota mensual recomendada:</b><br>
+                Calculamos la aportación mensual necesaria para alcanzar ese capital, teniendo en cuenta la rentabilidad y la inflación.  
+                Resultado: <b>{contexto['cuota_recomendada']:,.0f} €</b>.</p>
+
+                <p><b>6. Resultado final del plan:</b><br>
+                Con la cuota aplicada, tu ahorro estimado al jubilarte será:  
+                <b>{contexto['capital_final']:,.0f} €</b>.</p>
+            </div>
+
+        </div>
+<div style="
+    width:100%;
+    text-align:center;
+    padding:18px;
+    margin-top:40px;
+    background: linear-gradient(180deg, #0055A4 0%, #003366 100%);
+    color:white;
+    font-size:13px;
+    border-radius:8px;
+">
+    Simulador SRG — © 2026 Samuel Ruiz González  
+    <br>Herramienta educativa y formativa para Agentes
+</div>
+
+    </body>
+    </html>
+    """
+
+
+# ============================================================
+# 🟦 Función Informe Técnico SRG — Agente
+# ============================================================
+
+def informe_agente(contexto, fig):
+    grafica_html = fig.to_html(include_plotlyjs='cdn') if fig else ""
+
+    return f"""
+    <html>
+    <head>
+        <meta charset="UTF-8">
+
+        <style>
+            body {{
+                font-family:'Segoe UI', Arial;
+                background-color:#f7f9fc;
+                color:#0A1A2F;
+                margin:0;
+            }}
+
+            .bloque {{
+                border:1px solid #0055A4;
+                border-radius:8px;
+                padding:20px;
+                background-color:white;
+                margin-top:25px;
+            }}
+
+            .bloque-amarillo {{
+                border: 1px solid #d4af37;
+                background-color: #fff8dc;
+                border-radius: 10px;
+                padding: 20px;
+                margin-top: 25px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            }}
+
+            .bloque-amarillo h2 {{
+                color: #0A1A2F;
+                font-size: 20px;
+                font-weight: 700;
+                margin-bottom: 15px;
+            }}
+
+            .bloque-amarillo p {{
+                color: #0A1A2F;
+                font-size: 14px;
+                line-height: 1.5;
+                margin-bottom: 10px;
+            }}
+
+            .bloque-amarillo b {{
+                color: #0A1A2F;
+            }}
+
+            table {{
+                width:100%;
+                border-collapse:collapse;
+                font-size:14px;
+            }}
+
+            th, td {{
+                border:1px solid #ccc;
+                padding:6px 8px;
+                text-align:right;
+            }}
+
+            th {{
+                background-color:#0055A4;
+                color:white;
+            }}
+
+            tr:nth-child(even) {{
+                background-color:#f2f4f8;
+            }}
+        </style>
+    </head>
+
+    <body>
+
+        <div style="background: linear-gradient(180deg, #0055A4 0%, #003366 100%);
+                    color:white; padding:25px; text-align:center;">
+            <h1>Informe Técnico SRG</h1>
+            <p>Cliente: <b>{contexto['nombre_cliente']}</b> — Tel: {contexto['telefono']} — Email: {contexto['email']}</p>
+            <p>Fecha: {contexto['fecha']}</p>
+        </div>
+
+        <div style="padding:30px;">
+
+            <div class="bloque-amarillo">
+                <h2>1. Datos técnicos considerados</h2>
+                <p>Pensión futura estimada: <b>{contexto['pension_futura']:,.0f} €</b></p>
+                <p>Nivel de vida objetivo: <b>{contexto['nivel_vida']:,.0f} €</b></p>
+                <p>Brecha mensual: <b>{contexto['brecha']:,.0f} €</b></p>
+                <p>Rentabilidad media anual: <b>{contexto['rentabilidad']} %</b></p>
+                <p>Inflación media anual: <b>{contexto['inflacion_media']} %</b></p>
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>2. Resultados del plan</h2>
+                <p>Cuota aplicada: <b>{contexto['cuota_recomendada']:,.0f} €</b></p>
+                <p>Capital final estimado: <b>{contexto['capital_final']:,.0f} €</b></p>
+                <p>Capital objetivo: <b>{contexto['capital_objetivo']:,.0f} €</b></p>
+                <p>Capital ajustado final: <b>{contexto['capital_ajustado_final']:,.0f} €</b></p>
+                <p>Rentabilidad neta: <b>{contexto['rentabilidad_neta']:.2f} %</b></p>
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>3. Evolución del ahorro</h2>
+                {contexto['tabla_evolucion']}
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>4. Gráfica del plan</h2>
+                {grafica_html}
+            </div>
+
+            <div class="bloque-amarillo">
+                <h2>5. Trazabilidad técnica del cálculo SRG</h2>
+
+                <p><b>1. Base reguladora (BR):</b><br>
+                BR = media ponderada de las bases de cotización actualizadas.  
+                Valor utilizado: <b>{contexto['pension_futura']:,.0f} €</b> / porcentaje de cobertura.</p>
+
+                <p><b>2. Pensión futura (PF):</b><br>
+                PF = BR × porcentaje según años cotizados.  
+                Resultado: <b>{contexto['pension_futura']:,.0f} €</b>.</p>
+
+                <p><b>3. Nivel de vida futuro (NVF):</b><br>
+                NVF = gasto_actual × (1 + inflación_media) ^ años.  
+                Resultado: <b>{contexto['nivel_vida']:,.0f} €</b>.</p>
+
+                <p><b>4. Brecha mensual (BM):</b><br>
+                BM = NVF − PF  
+                Resultado: <b>{contexto['brecha']:,.0f} €</b>.</p>
+
+                <p><b>5. Capital objetivo (CO):</b><br>
+                CO = BM × 12 × años_hasta_jubilación  
+                Resultado: <b>{contexto['capital_objetivo']:,.0f} €</b>.</p>
+
+                <p><b>6. Cuota recomendada (CR):</b><br>
+                Fórmula de valor futuro de una renta periódica:  
+                CR = (CO − A × (1+r)^n) × r / ((1+r)^n − 1)  
+                Donde:<br>
+                • A = aportación inicial<br>
+                • r = rentabilidad mensual<br>
+                • n = meses hasta jubilación<br>
+                Resultado: <b>{contexto['cuota_recomendada']:,.0f} €</b>.</p>
+
+                <p><b>7. Capital final del plan (CF):</b><br>
+                CF = evolución mensual del ahorro con capitalización compuesta.  
+                Resultado: <b>{contexto['capital_final']:,.0f} €</b>.</p>
+
+                <p><b>8. Capital ajustado por inflación (CAI):</b><br>
+                CAI = CF / (1 + inflación_media) ^ años  
+                Resultado: <b>{contexto['capital_ajustado_final']:,.0f} €</b>.</p>
+
+                <p><b>9. Rentabilidad neta del plan:</b><br>
+                RN = (CF / total_aportado − 1) × 100  
+                Resultado: <b>{contexto['rentabilidad_neta']:.2f} %</b>.</p>
+            </div>
+
+        </div>
+    <div style="
+    width:100%;
+    text-align:center;
+    padding:18px;
+    margin-top:40px;
+    background: linear-gradient(180deg, #0055A4 0%, #003366 100%);
+    color:white;
+    font-size:13px;
+    border-radius:8px;
+    ">
+    Informe Técnico SRG — © 2026 Samuel Ruiz González  
+    <br>Modelo SRG: trazabilidad completa de cálculos y proyecciones
+</div>
+
+    </body>
+    </html>
+    """
+
+# ============================================================
+# 🟦 BLOQUE FINAL SRG — VISTA PREVIA Y DESCARGAS
+# ============================================================
+
+html_cliente_recom = informe_cliente(contexto_pdf, fig)
+html_agente_recom = informe_agente(contexto_pdf, fig)
+
+bytes_cliente_recom = html_cliente_recom.encode("utf-8")
+bytes_agente_recom = html_agente_recom.encode("utf-8")
+
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #003366, #0055A4);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 12px;
+    margin-top: 35px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+">
+    <h2 style="margin-bottom: 10px;">Vista previa y descargas de informes SRG</h2>
+    <p style="margin:0;">Cuota aplicada: <b>""" + f"{cuota_real:,.0f} €" + """</b></p>
+</div>
+""", unsafe_allow_html=True)
+
+col_cli, col_ag = st.columns(2)
+
+with col_cli:
+    st.markdown("### Informe Cliente SRG")
+    st.caption("Versión explicada en lenguaje cotidiano para el cliente.")
+
+    with st.expander("Vista previa del informe"):
+        st.components.v1.html(html_cliente_recom, height=350, scrolling=True)
+
+    st.download_button(
+        label="📄 Descargar Informe Cliente",
+        data=bytes_cliente_recom,
+        file_name="Informe_Cliente_SRG.html",
+        mime="text/html"
+    )
+
+with col_ag:
+    st.markdown("### Informe Técnico SRG — Agente")
+    st.caption("Versión técnica con cálculos y metodología SRG.")
+
+    with st.expander("Vista previa del informe"):
+        st.components.v1.html(html_agente_recom, height=350, scrolling=True)
+
+    st.download_button(
+        label="📄 Descargar Informe Técnico",
+        data=bytes_agente_recom,
+        file_name="Informe_Agente_SRG.html",
+        mime="text/html"
+    )
+st.markdown("""
+<div style="
+    width:100%;
+    text-align:center;
+    padding:20px;
+    margin-top:40px;
+    background: linear-gradient(135deg, #003366, #0055A4);
+    color:white;
+    font-size:14px;
+    border-radius:8px;
+">
+    Simulador de Jubilación SRG — © 2026 Samuel Ruiz González  
+    <br>Herramienta profesional de planificación financiera
+</div>
+""", unsafe_allow_html=True)
 
